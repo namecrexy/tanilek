@@ -1,0 +1,75 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint-and-test:
+    name: Lint (Biome) + testy (bun test)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Pobranie kodu
+        uses: actions/checkout@v4
+
+      - name: Instalacja Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Instalacja zależności
+        run: bun install --frozen-lockfile
+
+      - name: Lint i formatowanie (Biome)
+        run: bun run lint
+
+      - name: Sprawdzenie typów (TypeScript)
+        run: bun run typecheck
+
+      - name: Testy jednostkowe i integracyjne
+        run: bun test
+
+      - name: Generowanie data/leki.parquet z próbki
+        run: |
+          bun run build-demo-data
+          test -s data/leki.parquet
+          cat data/leki.parquet.meta.json
+
+  docker:
+    name: Budowa i smoke test obrazu Docker
+    runs-on: ubuntu-latest
+    needs: lint-and-test
+    timeout-minutes: 20
+    steps:
+      - name: Pobranie kodu
+        uses: actions/checkout@v4
+
+      - name: Budowa obrazu (tryb demo, bez sieci)
+        run: docker build --build-arg FETCH_MODE=demo -t tanilek:ci .
+
+      - name: Uruchomienie kontenera i sprawdzenie API
+        run: |
+          docker run -d --name tanilek -p 3000:3000 tanilek:ci
+          for i in $(seq 1 30); do
+            if curl -fsS http://localhost:3000/api/health; then break; fi
+            sleep 1
+          done
+          echo
+          curl -fsS "http://localhost:3000/api/search?q=sortis" | grep -q '"Sortis"'
+          curl -fsSI "http://localhost:3000/api/search?q=sortis" | grep -i '^server-timing: db;dur='
+          curl -fsS http://localhost:3000/ | grep -q 'TaniLek'
+          echo "Smoke test OK"
+
+      - name: Logi kontenera
+        if: always()
+        run: docker logs tanilek || true

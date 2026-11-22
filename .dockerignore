@@ -1,0 +1,10 @@
+node_modules
+.git
+.github
+.env
+data/*.parquet
+data/*.json
+data/raw
+coverage
+scratch_t
+*.log

@@ -1,0 +1,36 @@
+# Uruchomienie całej aplikacji jedną komendą:
+#   docker compose up --build
+# Następnie otwórz http://localhost:3000
+#
+# Opcjonalnie (np. w pliku .env obok tego pliku):
+#   FETCH_MODE=demo                 – budowa bez dostępu do sieci (tylko próbka)
+#   SOURCE_URL=https://...xlsx      – bezpośredni plik obwieszczenia MZ
+#   HOST_PORT=8080                  – inny port na hoście
+
+services:
+  tanilek:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        FETCH_MODE: ${FETCH_MODE:-api}
+        SOURCE_URL: ${SOURCE_URL:-}
+        DANE_GOV_DATASET_ID: ${DANE_GOV_DATASET_ID:-}
+        DANE_GOV_API_BASE: ${DANE_GOV_API_BASE:-https://api.dane.gov.pl/1.4}
+    image: tanilek:latest
+    container_name: tanilek
+    ports:
+      - "${HOST_PORT:-3000}:3000"
+    environment:
+      NODE_ENV: production
+      PORT: "3000"
+      SEARCH_DEFAULT_LIMIT: ${SEARCH_DEFAULT_LIMIT:-20}
+      SEARCH_MAX_LIMIT: ${SEARCH_MAX_LIMIT:-50}
+      API_CACHE_MAX_AGE: ${API_CACHE_MAX_AGE:-60}
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    deploy:
+      resources:
+        limits:
+          memory: 512M

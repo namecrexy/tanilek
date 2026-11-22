@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="pl">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="TaniLek – wyszukiwarka tańszych zamienników leków refundowanych na podstawie otwartych danych Ministerstwa Zdrowia." />
+    <meta name="color-scheme" content="light" />
+    <meta name="theme-color" content="#0F4C81" />
+    <title>TaniLek – tańsze zamienniki leków refundowanych</title>
+    <link rel="stylesheet" href="/styles.css?v=1.1.0" />
+    <script src="/app.js?v=1.1.0" defer></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#wyniki">Przejdź do wyników</a>
+
+    <header class="site-header">
+      <div class="container header-inner">
+        <div class="brand">
+          <span class="brand-mark" aria-hidden="true">+</span>
+          <div>
+            <h1 class="logo">Tani<span>Lek</span></h1>
+            <p class="tagline">Ten sam lek, ta sama dawka – często kilka razy taniej.</p>
+          </div>
+        </div>
+        <p id="perf-pill" class="perf-pill" aria-live="polite" title="Czas zapytania w bazie DuckDB">
+          <span class="perf-dot" aria-hidden="true"></span>
+          <span id="perf-db">DuckDB – ms</span>
+          <span aria-hidden="true">•</span>
+          <span id="perf-rows">– leków</span>
+        </p>
+      </div>
+    </header>
+
+    <main class="container" id="main">
+      <div id="demo-banner" class="banner banner-info" role="status" hidden>
+        <strong>Tryb demonstracyjny.</strong>
+        Wyświetlane są przykładowe dane (35 leków) z orientacyjnymi cenami. Aby wczytać pełny wykaz, uruchom
+        <code>bun run fetch-data</code>.
+      </div>
+
+      <section class="search-panel card" aria-labelledby="search-heading">
+        <h2 id="search-heading" class="search-title">Znajdź tańszy odpowiednik swojego leku</h2>
+        <search>
+          <form id="search-form" autocomplete="off">
+            <label for="q" class="visually-hidden">Nazwa leku, substancja czynna lub choroba</label>
+            <div class="search-row">
+              <svg class="search-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <circle cx="11" cy="11" r="7" />
+                <path d="m20 20-3.5-3.5" />
+              </svg>
+              <input
+                id="q"
+                name="q"
+                type="search"
+                inputmode="search"
+                placeholder="Wpisz nazwę leku, np. Apap, Ibuprom, atorwastatyna, nadciśnienie"
+                minlength="2"
+                maxlength="100"
+                aria-describedby="search-hint"
+                spellcheck="false"
+              />
+              <button type="submit" class="search-btn">Szukaj</button>
+            </div>
+            <p id="search-hint" class="hint">
+              Rozumiemy marki (Apap, Nurofen), polskie nazwy substancji i literówki. Polskie znaki nie są wymagane.
+            </p>
+          </form>
+        </search>
+        <fieldset class="quick-pills">
+          <legend class="visually-hidden">Przykładowe wyszukiwania</legend>
+          <span class="quick-label" aria-hidden="true">Popularne:</span>
+          <button type="button" class="pill" data-q="Apap">Apap <small class="pill-hint">(Paracetamol)</small></button>
+          <button type="button" class="pill" data-q="Ibuprom">Ibuprom <small class="pill-hint">(Ibuprofen)</small></button>
+          <button type="button" class="pill" data-q="Relanium">Relanium <small class="pill-hint">(Diazepam)</small></button>
+          <button type="button" class="pill" data-q="Atoris">Atoris <small class="pill-hint">(Cholesterol)</small></button>
+          <button type="button" class="pill" data-q="Glucophage">Glucophage <small class="pill-hint">(Cukrzyca)</small></button>
+          <button type="button" class="pill" data-q="Euthyrox">Euthyrox <small class="pill-hint">(Tarczyca)</small></button>
+        </fieldset>
+      </section>
+
+      <div class="layout">
+        <section class="results-panel" aria-labelledby="results-heading">
+          <div class="panel-head">
+            <h2 id="results-heading">Wyniki wyszukiwania</h2>
+            <p id="status" class="status" role="status" aria-live="polite">Zacznij pisać, aby wyszukać lek.</p>
+          </div>
+          <p id="resolved-note" class="note-bar" role="status" hidden></p>
+          <fieldset id="dose-filters" class="dose-filters" hidden></fieldset>
+          <ol id="wyniki" class="results" tabindex="-1"></ol>
+        </section>
+
+        <section class="details-panel card" aria-labelledby="details-heading" aria-live="polite">
+          <h2 id="details-heading">Zamienniki i oszczędności</h2>
+          <div id="details" class="details">
+            <p class="placeholder">
+              Wybierz lek z listy, aby zobaczyć tańsze odpowiedniki o tej samej substancji czynnej, dawce i postaci.
+            </p>
+          </div>
+
+          <section id="pharmacy-finder" class="pharmacy-finder" aria-labelledby="pharmacy-heading">
+            <h3 id="pharmacy-heading" class="pharmacy-title">Znajdź aptekę w pobliżu</h3>
+            <form id="pharmacy-form" class="pharmacy-form" autocomplete="on">
+              <label for="pharmacy-q" class="visually-hidden">Kod pocztowy lub adres</label>
+              <input
+                id="pharmacy-q"
+                name="pharmacy-q"
+                type="text"
+                inputmode="text"
+                placeholder="Wpisz kod pocztowy lub adres, np. 00-001 lub Warszawa, Marszałkowska 10"
+                minlength="3"
+                maxlength="120"
+                required
+              />
+              <button type="submit" class="pharmacy-btn">Szukaj aptek</button>
+            </form>
+            <p id="pharmacy-status" class="status pharmacy-status" role="status" aria-live="polite"></p>
+            <ol id="pharmacy-list" class="pharmacy-list"></ol>
+            <p class="pharmacy-info">
+              Cena leku refundowanego jest ustawowo <strong>taka sama w każdej aptece</strong> w Polsce. Dostępność
+              <span id="pharmacy-drug-label">wybranego leku</span> „od ręki” możesz sprawdzić w serwisach
+              <a id="ktomalek-link" href="https://ktomalek.pl/" target="_blank" rel="noopener noreferrer">KtoMaLek</a>
+              i
+              <a id="gdziepolek-link" href="https://www.gdziepolek.pl/" target="_blank" rel="noopener noreferrer"
+                >GdziePoLek</a
+              >.
+            </p>
+            <p class="pharmacy-attribution">
+              Dane aptek: © współtwórcy
+              <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer"
+                >OpenStreetMap</a
+              >. Odległość w linii prostej.
+            </p>
+          </section>
+        </section>
+      </div>
+
+      <aside class="banner banner-warning" aria-label="Ważna informacja">
+        <strong>Ważne:</strong> zamiana leku na odpowiednik jest możliwa w aptece, o ile lekarz nie zaznaczył na recepcie
+        „nie zamieniać” (NZ). Przed zmianą leku porozmawiaj z farmaceutą lub lekarzem. TaniLek nie jest wyrobem medycznym
+        i nie zastępuje porady specjalisty.
+      </aside>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container">
+        <p>
+          Źródło danych: <span id="data-source">ładowanie…</span>.
+          Dane publiczne udostępniane przez <a href="https://dane.gov.pl" rel="noopener noreferrer">dane.gov.pl</a>.
+        </p>
+        <p>
+          TaniLek – projekt open source na licencji MIT. Wersja <span id="app-version">–</span>.
+          <span id="perf-details" class="perf-details"></span>
+        </p>
+      </div>
+    </footer>
+  </body>
+</html>

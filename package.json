@@ -1,0 +1,43 @@
+{
+  "name": "tanilek",
+  "version": "1.1.0",
+  "description": "TaniLek – wyszukiwarka tańszych zamienników leków refundowanych (dane.gov.pl + DuckDB + Bun).",
+  "author": "Bartosz Pastuszka",
+  "license": "MIT",
+  "type": "module",
+  "private": true,
+  "keywords": [
+    "leki",
+    "refundacja",
+    "dane.gov.pl",
+    "duckdb",
+    "parquet",
+    "bun",
+    "open-data"
+  ],
+  "engines": {
+    "bun": ">=1.1.0"
+  },
+  "scripts": {
+    "dev": "bun --watch src/server.ts",
+    "start": "bun src/server.ts",
+    "fetch-data": "bun scripts/fetch_data.ts",
+    "build-demo-data": "bun scripts/fetch_data.ts --demo",
+    "test": "bun test",
+    "lint": "biome check .",
+    "lint:fix": "biome check --write .",
+    "format": "biome format --write .",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@duckdb/node-api": "^2.0.1-r.1"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.6.8",
+    "@types/bun": "^1.4.5",
+    "typescript": "^7.0.2"
+  },
+  "trustedDependencies": [
+    "@duckdb/node-bindings"
+  ]
+}

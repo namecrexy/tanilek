@@ -1,0 +1,36 @@
+id;nazwa;substancja_czynna;dawka;postac;opakowanie;kod_ean;poziom_odplatnosci;doplata_pacjenta;cena_detaliczna;wskazanie
+1;Sortis;Atorvastatinum;20 mg;tabl. powl.;30 szt.;5909990010011;30%;85.00;92.40;Hipercholesterolemia, profilaktyka chorób sercowo-naczyniowych
+2;Atoris;Atorvastatinum;20 mg;tabl. powl.;30 szt.;5909990010080;30%;3.20;14.10;Hipercholesterolemia, profilaktyka chorób sercowo-naczyniowych
+3;Atorvasterol;Atorvastatinum;20 mg;tabl. powl.;30 szt.;5909990010158;30%;2.95;13.80;Hipercholesterolemia, profilaktyka chorób sercowo-naczyniowych
+4;Tulip;Atorvastatinum;20 mg;tabl. powl.;30 szt.;5909990010226;30%;4.10;15.20;Hipercholesterolemia, profilaktyka chorób sercowo-naczyniowych
+5;Atorvastatin Teva;Atorvastatinum;20 mg;tabl. powl.;30 szt.;5909990010295;30%;2.60;12.90;Hipercholesterolemia, profilaktyka chorób sercowo-naczyniowych
+6;Glucophage 850;Metformini hydrochloridum;850 mg;tabl. powl.;60 szt.;5909990010363;ryczałt;8.40;14.90;Cukrzyca typu 2
+7;Metformax 850;Metformini hydrochloridum;850 mg;tabl. powl.;60 szt.;5909990010431;ryczałt;3.20;7.85;Cukrzyca typu 2
+8;Siofor 850;Metformini hydrochloridum;850 mg;tabl. powl.;60 szt.;5909990010509;ryczałt;4.45;9.10;Cukrzyca typu 2
+9;Formetic;Metformini hydrochloridum;850 mg;tabl. powl.;60 szt.;5909990010578;ryczałt;3.20;6.95;Cukrzyca typu 2
+10;Tritace 5;Ramiprilum;5 mg;tabl.;28 szt.;5909990010646;30%;15.90;24.60;Nadciśnienie tętnicze, niewydolność serca
+11;Ramipril Genoptim;Ramiprilum;5 mg;tabl.;28 szt.;5909990010714;30%;3.90;9.80;Nadciśnienie tętnicze, niewydolność serca
+12;Piramil;Ramiprilum;5 mg;tabl.;28 szt.;5909990010783;30%;4.60;10.50;Nadciśnienie tętnicze, niewydolność serca
+13;Ampril;Ramiprilum;5 mg;tabl.;28 szt.;5909990010851;30%;5.30;11.20;Nadciśnienie tętnicze, niewydolność serca
+14;Polpril;Ramiprilum;5 mg;kaps. twarde;28 szt.;5909990010929;30%;4.25;10.10;Nadciśnienie tętnicze, niewydolność serca
+15;Concor 5;Bisoprololi fumaras;5 mg;tabl. powl.;30 szt.;5909990010998;30%;9.95;16.80;Nadciśnienie tętnicze, stabilna niewydolność serca
+16;Bisocard 5;Bisoprololi fumaras;5 mg;tabl. powl.;30 szt.;5909990011063;30%;2.15;8.40;Nadciśnienie tętnicze, stabilna niewydolność serca
+17;Bisoratio 5;Bisoprololi fumaras;5 mg;tabl. powl.;30 szt.;5909990011131;30%;1.90;7.90;Nadciśnienie tętnicze, stabilna niewydolność serca
+18;Coronal 5;Bisoprololi fumaras;5 mg;tabl. powl.;60 szt.;5909990011209;30%;4.20;15.40;Nadciśnienie tętnicze, stabilna niewydolność serca
+19;Norvasc;Amlodipinum;5 mg;tabl.;30 szt.;5909990011278;30%;14.85;21.40;Nadciśnienie tętnicze, stabilna dławica piersiowa
+20;Amlozek;Amlodipinum;5 mg;tabl.;30 szt.;5909990011346;30%;1.40;6.10;Nadciśnienie tętnicze, stabilna dławica piersiowa
+21;Tenox;Amlodipinum;5 mg;tabl.;30 szt.;5909990011414;30%;1.95;6.85;Nadciśnienie tętnicze, stabilna dławica piersiowa
+22;Agen;Amlodipinum;5 mg;tabl.;30 szt.;5909990011483;30%;1.65;6.40;Nadciśnienie tętnicze, stabilna dławica piersiowa
+23;Crestor;Rosuvastatinum;10 mg;tabl. powl.;28 szt.;5909990011551;30%;29.80;38.90;Hipercholesterolemia
+24;Romazic;Rosuvastatinum;10 mg;tabl. powl.;28 szt.;5909990011629;30%;4.15;12.40;Hipercholesterolemia
+25;Suvardio;Rosuvastatinum;10 mg;tabl. powl.;28 szt.;5909990011698;30%;4.85;13.10;Hipercholesterolemia
+26;Rosucard;Rosuvastatinum;10 mg;tabl. powl.;28 szt.;5909990011766;30%;4.60;12.85;Hipercholesterolemia
+27;Plavix;Clopidogrelum;75 mg;tabl. powl.;28 szt.;5909990011834;30%;58.40;72.30;Profilaktyka zdarzeń zakrzepowych w miażdżycy
+28;Areplex;Clopidogrelum;75 mg;tabl. powl.;28 szt.;5909990011902;30%;8.10;21.90;Profilaktyka zdarzeń zakrzepowych w miażdżycy
+29;Zyllt;Clopidogrelum;75 mg;tabl. powl.;28 szt.;5909990011971;30%;8.60;22.40;Profilaktyka zdarzeń zakrzepowych w miażdżycy
+30;Clopidogrel Bluefish;Clopidogrelum;75 mg;tabl. powl.;28 szt.;5909990012046;30%;7.00;20.80;Profilaktyka zdarzeń zakrzepowych w miażdżycy
+31;Euthyrox N 50;Levothyroxinum natricum;50 µg;tabl.;50 szt.;5909990012114;ryczałt;3.90;9.80;Niedoczynność tarczycy
+32;Letrox 50;Levothyroxinum natricum;50 µg;tabl.;50 szt.;5909990012183;ryczałt;3.20;9.10;Niedoczynność tarczycy
+33;Controloc 20;Pantoprazolum;20 mg;tabl. dojel.;28 szt.;5909990012251;50%;19.40;26.70;Choroba refluksowa przełyku
+34;Nolpaza;Pantoprazolum;20 mg;tabl. dojel.;28 szt.;5909990012329;50%;6.90;13.20;Choroba refluksowa przełyku
+35;Ozzion;Pantoprazolum;20 mg;tabl. dojel.;28 szt.;5909990012398;50%;5.80;12.10;Choroba refluksowa przełyku

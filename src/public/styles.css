@@ -1,0 +1,1156 @@
+/* TaniLek – jasny, wysoko kontrastowy motyw w stylu nowoczesnych aplikacji medycznych. */
+
+:root {
+  --bg: #f8fafc;
+  --surface: #ffffff;
+  --surface-muted: #f1f5f9;
+  --border: #e2e8f0;
+  --border-strong: #cbd5e1;
+  --text: #0f172a;
+  --text-muted: #475569;
+  --text-subtle: #64748b;
+  --primary: #0f4c81;
+  --primary-hover: #1d4ed8;
+  --primary-soft: #eff6ff;
+  --primary-ring: rgba(29, 78, 216, 0.25);
+  --save: #059669;
+  --save-strong: #047857;
+  --save-bg: #ecfdf5;
+  --save-border: #a7f3d0;
+  --info-text: #1e3a8a;
+  --info-bg: #eff6ff;
+  --info-border: #bfdbfe;
+  --warn-text: #78350f;
+  --warn-bg: #fffbeb;
+  --warn-border: #fde68a;
+  --danger: #b91c1c;
+  --shadow: 0 4px 20px rgba(15, 23, 42, 0.04);
+  --shadow-hover: 0 8px 28px rgba(15, 23, 42, 0.08);
+  --radius: 14px;
+  --radius-sm: 10px;
+  --font: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+  --font-mono: ui-monospace, "SFMono-Regular", "Cascadia Code", Consolas, monospace;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 1rem;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3 {
+  line-height: 1.25;
+  margin: 0;
+}
+
+a {
+  color: var(--primary);
+}
+
+a:hover {
+  color: var(--primary-hover);
+}
+
+code {
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+  background: var(--surface-muted);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.05em 0.35em;
+}
+
+:focus-visible {
+  outline: 3px solid var(--primary-ring);
+  outline-offset: 2px;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.skip-link {
+  position: absolute;
+  left: 1rem;
+  top: -3rem;
+  z-index: 10;
+  background: var(--primary);
+  color: #fff;
+  padding: 0.5rem 0.9rem;
+  border-radius: var(--radius-sm);
+  text-decoration: none;
+}
+
+.skip-link:focus {
+  top: 1rem;
+}
+
+.container {
+  width: 100%;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 1.25rem;
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+.num,
+.price,
+.amount,
+.perf-pill,
+.badge-save {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ------------------------------------------------------------------ Nagłówek */
+
+.site-header {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+
+.header-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-block: 1rem;
+  flex-wrap: wrap;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.brand-mark {
+  display: grid;
+  place-items: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 12px;
+  background: var(--primary);
+  color: #fff;
+  font-size: 1.6rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.logo {
+  font-size: 1.5rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--primary);
+}
+
+.logo span {
+  color: var(--save);
+}
+
+.tagline {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--text-subtle);
+}
+
+.perf-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin: 0;
+  padding: 0.35rem 0.8rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface-muted);
+  color: var(--text-muted);
+  font-size: 0.8125rem;
+  white-space: nowrap;
+}
+
+.perf-dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: var(--save);
+  box-shadow: 0 0 0 3px var(--save-bg);
+}
+
+.perf-pill.fresh {
+  animation: pulse 0.9s ease-out;
+}
+
+@keyframes pulse {
+  from {
+    border-color: var(--save-border);
+    background: var(--save-bg);
+  }
+  to {
+    border-color: var(--border);
+    background: var(--surface-muted);
+  }
+}
+
+/* ------------------------------------------------------------------ Bannery */
+
+main {
+  padding-block: 1.5rem 2rem;
+}
+
+.banner {
+  border-radius: var(--radius-sm);
+  padding: 0.85rem 1rem;
+  margin-block: 0 1.25rem;
+  font-size: 0.9375rem;
+  border: 1px solid;
+}
+
+.banner-info {
+  background: var(--info-bg);
+  border-color: var(--info-border);
+  color: var(--info-text);
+}
+
+.banner-warning {
+  background: var(--warn-bg);
+  border-color: var(--warn-border);
+  color: var(--warn-text);
+  margin-top: 1.5rem;
+}
+
+/* ------------------------------------------------------------------ Wyszukiwarka */
+
+.search-panel {
+  padding: 1.5rem;
+  margin-bottom: 1.25rem;
+}
+
+.search-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin-bottom: 0.9rem;
+}
+
+.search-row {
+  position: relative;
+  display: flex;
+  gap: 0.5rem;
+}
+
+.search-icon {
+  position: absolute;
+  left: 1rem;
+  top: 50%;
+  width: 1.25rem;
+  height: 1.25rem;
+  transform: translateY(-50%);
+  fill: none;
+  stroke: var(--text-subtle);
+  stroke-width: 2;
+  stroke-linecap: round;
+  pointer-events: none;
+}
+
+#q {
+  flex: 1;
+  min-width: 0;
+  font: inherit;
+  font-size: 1.0625rem;
+  padding: 0.85rem 1rem 0.85rem 2.9rem;
+  border: 1.5px solid var(--border-strong);
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--text);
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s;
+}
+
+#q::placeholder {
+  color: #94a3b8;
+}
+
+#q:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 4px var(--primary-ring);
+}
+
+.search-btn {
+  font: inherit;
+  font-weight: 600;
+  padding: 0 1.4rem;
+  border: 0;
+  border-radius: 12px;
+  background: var(--primary);
+  color: #fff;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.search-btn:hover {
+  background: var(--primary-hover);
+}
+
+.hint {
+  margin: 0.5rem 0 0;
+  font-size: 0.8125rem;
+  color: var(--text-subtle);
+}
+
+.quick-pills {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.quick-label {
+  font-size: 0.8125rem;
+  color: var(--text-subtle);
+  margin-right: 0.15rem;
+}
+
+.pill {
+  font: inherit;
+  font-size: 0.875rem;
+  padding: 0.35rem 0.85rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--primary);
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background 0.15s,
+    border-color 0.15s,
+    color 0.15s;
+}
+
+.pill .pill-hint {
+  font-weight: 400;
+  color: var(--text-subtle);
+}
+
+.pill:hover {
+  border-color: var(--primary-hover);
+  background: var(--primary-soft);
+  color: var(--primary-hover);
+}
+
+.pill[aria-pressed="true"] {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+}
+
+.pill[aria-pressed="true"] .pill-hint {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+/* ------------------------------------------------------------------ Układ */
+
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1.5rem;
+  align-items: start;
+}
+
+/* Poniżej 960px kolumny układają się jedna pod drugą. */
+@media (min-width: 960px) {
+  .layout {
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+  }
+
+  .details-panel {
+    position: sticky;
+    top: 1.25rem;
+    max-height: calc(100vh - 2.5rem);
+    overflow-y: auto;
+  }
+}
+
+.panel-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.75rem;
+}
+
+.results-panel h2,
+.details-panel h2 {
+  font-size: 1.0625rem;
+  font-weight: 700;
+}
+
+.status {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--text-subtle);
+}
+
+.status.error {
+  color: var(--danger);
+}
+
+.note-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0 0 0.75rem;
+  padding: 0.65rem 0.9rem;
+  border: 1px solid var(--info-border);
+  border-radius: var(--radius-sm);
+  background: var(--info-bg);
+  color: var(--info-text);
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.note-bar::before {
+  content: "i";
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 1.25rem;
+  height: 1.25rem;
+  border-radius: 50%;
+  background: var(--primary-hover);
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 700;
+  font-style: italic;
+}
+
+.dose-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-bottom: 0.75rem;
+}
+
+.dose-filters .pill {
+  font-size: 0.8125rem;
+  padding: 0.3rem 0.75rem;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ------------------------------------------------------------------ Wyniki */
+
+.results {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.5rem;
+}
+
+/* Karta grupy: nazwa + dawka + postać, z pigułkami opakowań w dolnym wierszu. */
+.result-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s;
+}
+
+.result-card:hover {
+  border-color: var(--border-strong);
+  box-shadow: var(--shadow-hover);
+}
+
+.result-card:has(.result-btn[aria-pressed="true"]) {
+  border-color: var(--primary);
+  box-shadow:
+    0 0 0 3px var(--primary-ring),
+    var(--shadow);
+}
+
+.result-btn {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.2rem 1rem;
+  width: 100%;
+  padding: 0.85rem 1rem 0.5rem;
+  font: inherit;
+  text-align: left;
+  color: inherit;
+  background: transparent;
+  border: 0;
+  border-radius: 12px 12px 0 0;
+  cursor: pointer;
+}
+
+.variant-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  padding: 0 1rem 0.8rem;
+}
+
+.variant-pill {
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.3;
+  padding: 0.2rem 0.6rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface-muted);
+  color: var(--text-muted);
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background 0.15s,
+    border-color 0.15s,
+    color 0.15s;
+}
+
+.variant-pill:hover {
+  border-color: var(--primary-hover);
+  background: var(--primary-soft);
+  color: var(--primary-hover);
+}
+
+.variant-pill.active {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+}
+
+.result-name {
+  font-weight: 700;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.result-name .dose {
+  font-weight: 500;
+  color: var(--primary);
+  margin-left: 0.35rem;
+}
+
+.result-price {
+  grid-row: span 1;
+  justify-self: end;
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--text);
+  line-height: 1.2;
+}
+
+.result-meta {
+  font-size: 0.8125rem;
+  color: var(--text-subtle);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.result-extra {
+  justify-self: end;
+  align-self: center;
+}
+
+.badge-save {
+  display: inline-block;
+  padding: 0.1rem 0.55rem;
+  border: 1px solid var(--save-border);
+  border-radius: 999px;
+  background: var(--save-bg);
+  color: var(--save-strong);
+  font-size: 0.75rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.badge-muted {
+  font-size: 0.75rem;
+  color: var(--text-subtle);
+  white-space: nowrap;
+}
+
+/* ------------------------------------------------------------------ Szczegóły */
+
+.details-panel {
+  padding: 1.25rem;
+}
+
+.details-panel h2 {
+  margin-bottom: 1rem;
+}
+
+.placeholder,
+.empty-state {
+  margin: 0;
+  padding: 1.75rem 1rem;
+  text-align: center;
+  color: var(--text-subtle);
+  background: var(--surface-muted);
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius-sm);
+  font-size: 0.9375rem;
+}
+
+.empty-state strong {
+  display: block;
+  color: var(--text);
+  margin-bottom: 0.25rem;
+}
+
+.selected-drug {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  padding-bottom: 1rem;
+  margin-bottom: 1rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.selected-drug h3 {
+  font-size: 1.125rem;
+  font-weight: 700;
+}
+
+.selected-drug p {
+  margin: 0.2rem 0 0;
+  font-size: 0.875rem;
+  color: var(--text-subtle);
+}
+
+.selected-price {
+  text-align: right;
+  flex: none;
+}
+
+.selected-price .price {
+  display: block;
+  font-size: 1.375rem;
+  font-weight: 800;
+}
+
+.selected-price small {
+  font-size: 0.75rem;
+  color: var(--text-subtle);
+}
+
+.best-offer {
+  display: grid;
+  gap: 0.2rem;
+  padding: 1rem 1.1rem;
+  margin-bottom: 1rem;
+  background: var(--save-bg);
+  border: 1px solid var(--save-border);
+  border-left: 5px solid var(--save);
+  border-radius: var(--radius-sm);
+  color: #064e3b;
+}
+
+.best-offer .label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--save);
+}
+
+.best-offer strong {
+  font-size: 1.0625rem;
+}
+
+.best-offer .amount {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--save-strong);
+}
+
+.best-offer .sub {
+  font-size: 0.875rem;
+}
+
+/* Karta „Na co pomaga i jak stosować” */
+.drug-info {
+  display: grid;
+  gap: 0.35rem;
+  padding: 0.85rem 1rem;
+  margin-bottom: 1rem;
+  background: var(--info-bg);
+  border: 1px solid var(--info-border);
+  border-left: 5px solid var(--primary);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.drug-info p {
+  margin: 0;
+}
+
+.drug-info-kicker {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--primary);
+}
+
+.drug-info-title {
+  margin: 0 0 0.15rem;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--info-text);
+}
+
+.drug-info-row strong {
+  color: var(--info-text);
+}
+
+.drug-info-official {
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+}
+
+.drug-info-disclaimer {
+  font-size: 0.75rem;
+  font-style: italic;
+  color: var(--text-subtle);
+}
+
+.no-offer {
+  margin: 0 0 1rem;
+  padding: 0.85rem 1rem;
+  border-radius: var(--radius-sm);
+  background: var(--surface-muted);
+  color: var(--text-muted);
+  font-size: 0.9375rem;
+}
+
+.table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+
+table {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+/* Stałe proporcje kolumn: nazwa leku dostaje resztę miejsca, kwoty mieszczą się w całości. */
+thead th:nth-child(2),
+thead th:nth-child(3) {
+  width: 27%;
+}
+
+caption {
+  caption-side: top;
+  text-align: left;
+  padding: 0.6rem 0.85rem;
+  font-size: 0.8125rem;
+  color: var(--text-subtle);
+  background: var(--surface-muted);
+  border-bottom: 1px solid var(--border);
+}
+
+th,
+td {
+  padding: 0.6rem 0.5rem;
+  text-align: left;
+  vertical-align: middle;
+  overflow-wrap: anywhere;
+}
+
+th:first-child,
+td:first-child {
+  padding-left: 0.75rem;
+}
+
+th:last-child,
+td:last-child {
+  padding-right: 0.75rem;
+}
+
+thead th.num {
+  white-space: normal;
+}
+
+thead th {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-subtle);
+  border-bottom: 1px solid var(--border);
+}
+
+tbody tr + tr td {
+  border-top: 1px solid var(--border);
+}
+
+.table-wrap td small {
+  color: var(--text-subtle);
+  font-size: 0.8rem;
+}
+
+.num {
+  text-align: right;
+  white-space: nowrap;
+}
+
+tr.is-cheapest td {
+  background: var(--save-bg);
+}
+
+tr.is-cheapest td:first-child {
+  box-shadow: inset 4px 0 0 var(--save);
+}
+
+tr.is-selected td {
+  background: var(--primary-soft);
+}
+
+tr.is-selected.is-cheapest td {
+  background: var(--save-bg);
+}
+
+.tag {
+  display: inline-block;
+  margin-left: 0.35rem;
+  padding: 0 0.45rem;
+  border-radius: 999px;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  vertical-align: 0.1em;
+}
+
+.tag-cheapest {
+  background: var(--save);
+  color: #fff;
+}
+
+.tag-selected {
+  background: var(--primary);
+  color: #fff;
+}
+
+.save-pos {
+  color: var(--save-strong);
+  font-weight: 700;
+}
+
+.save-neg {
+  color: var(--danger);
+}
+
+.save-none {
+  color: var(--text-subtle);
+}
+
+.note {
+  margin: 0.75rem 0 0;
+  font-size: 0.8rem;
+  color: var(--text-subtle);
+}
+
+/* ------------------------------------------------------------------ Stopka */
+
+.site-footer {
+  border-top: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-subtle);
+  font-size: 0.8125rem;
+  padding-block: 1.25rem;
+}
+
+.site-footer p {
+  margin: 0.25rem 0;
+}
+
+.perf-details {
+  margin-left: 0.25rem;
+}
+
+@media (max-width: 599px) {
+  .search-btn {
+    display: none;
+  }
+
+  .result-price {
+    font-size: 1.125rem;
+  }
+
+  .header-inner {
+    padding-block: 0.75rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .perf-pill.fresh {
+    animation: none;
+  }
+
+  #q,
+  .pill,
+  .search-btn,
+  .result-card,
+  .variant-pill {
+    transition: none;
+  }
+}
+
+/* Grupy przycisków jako <fieldset> – bez domyślnej ramki. */
+fieldset.quick-pills,
+fieldset.dose-filters {
+  border: 0;
+  padding: 0;
+  min-width: 0;
+}
+
+fieldset.quick-pills {
+  margin-inline: 0;
+  margin-bottom: 0;
+}
+
+fieldset.dose-filters {
+  margin-inline: 0;
+  margin-top: 0;
+}
+
+fieldset[hidden] {
+  display: none;
+}
+
+.note-bar[hidden] {
+  display: none;
+}
+
+/* ------------------------------------------------------------------ Apteki w pobliżu */
+
+.pharmacy-finder {
+  margin-top: 1.25rem;
+  padding-top: 1.1rem;
+  border-top: 1px solid var(--border);
+}
+
+.pharmacy-title {
+  font-size: 1rem;
+  font-weight: 700;
+  margin-bottom: 0.65rem;
+}
+
+.pharmacy-form {
+  display: flex;
+  gap: 0.5rem;
+}
+
+#pharmacy-q {
+  flex: 1;
+  min-width: 0;
+  font: inherit;
+  font-size: 0.9375rem;
+  padding: 0.6rem 0.8rem;
+  border: 1.5px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--text);
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s;
+}
+
+#pharmacy-q::placeholder {
+  color: #94a3b8;
+}
+
+#pharmacy-q:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 4px var(--primary-ring);
+}
+
+.pharmacy-btn {
+  font: inherit;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  padding: 0 1rem;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: var(--primary);
+  color: #fff;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s;
+}
+
+.pharmacy-btn:hover {
+  background: var(--primary-hover);
+}
+
+.pharmacy-status {
+  margin: 0.6rem 0 0;
+  font-size: 0.8125rem;
+}
+
+.pharmacy-status:empty {
+  display: none;
+}
+
+.pharmacy-list {
+  list-style: none;
+  margin: 0.6rem 0 0;
+  padding: 0;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.pharmacy-list[aria-busy="true"] {
+  opacity: 0.55;
+}
+
+.pharmacy-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  column-gap: 0.75rem;
+  row-gap: 0.15rem;
+  align-items: center;
+  padding: 0.65rem 0.8rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+}
+
+.pharmacy-head {
+  grid-column: 1;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.pharmacy-name {
+  font-size: 0.9375rem;
+}
+
+.distance-pill {
+  display: inline-block;
+  padding: 0.05rem 0.55rem;
+  border-radius: 999px;
+  border: 1px solid var(--save-border);
+  background: var(--save-bg);
+  color: var(--save-strong);
+  font-size: 0.75rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.pharmacy-address,
+.pharmacy-hours {
+  grid-column: 1;
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+  overflow-wrap: anywhere;
+}
+
+.pharmacy-hours {
+  color: var(--text-subtle);
+}
+
+.navigate-btn {
+  grid-column: 2;
+  grid-row: 1 / span 3;
+  align-self: center;
+  padding: 0.35rem 0.8rem;
+  border: 1px solid var(--primary);
+  border-radius: 999px;
+  color: var(--primary);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+  transition:
+    background 0.15s,
+    color 0.15s;
+}
+
+.navigate-btn:hover {
+  background: var(--primary);
+  color: #fff;
+}
+
+.pharmacy-info {
+  margin: 0.85rem 0 0;
+  padding: 0.65rem 0.8rem;
+  border-radius: var(--radius-sm);
+  background: var(--info-bg);
+  border: 1px solid var(--info-border);
+  color: var(--info-text);
+  font-size: 0.8125rem;
+}
+
+.pharmacy-attribution {
+  margin: 0.5rem 0 0;
+  font-size: 0.75rem;
+  color: var(--text-subtle);
+}
+
+@media (max-width: 599px) {
+  .pharmacy-form {
+    flex-direction: column;
+  }
+
+  .pharmacy-btn {
+    padding-block: 0.6rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #pharmacy-q,
+  .pharmacy-btn,
+  .navigate-btn {
+    transition: none;
+  }
+}
