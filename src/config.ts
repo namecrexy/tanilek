@@ -7,6 +7,7 @@
  * trudnego do zdiagnozowania błędu w trakcie działania.
  */
 import { isAbsolute, resolve } from "node:path";
+import { RPL_CSV_URL } from "./otc";
 
 export type NodeEnv = "development" | "production" | "test";
 
@@ -31,6 +32,11 @@ export interface AppConfig {
    * (`null` = wyłączone, gdy zmienna ustawiona na „off”).
    */
   readonly mzObwieszczeniaUrl: string | null;
+  /**
+   * Eksport CSV Rejestru Produktów Leczniczych – źródło leków bez recepty (OTC) i kodów ATC
+   * (`null` = wyłączone, gdy zmienna ustawiona na „off” – używany jest wtedy wbudowany zestaw OTC).
+   */
+  readonly rplCsvUrl: string | null;
   /** Limit czasu pojedynczego żądania sieciowego skryptu pobierającego (ms). */
   readonly fetchTimeoutMs: number;
   /** Domyślna liczba wyników wyszukiwania. */
@@ -134,7 +140,7 @@ export function loadConfig(env: Env = process.env, cwd: string = process.cwd()):
     throw new ConfigError(`DANE_GOV_DATASET_ID musi być liczbowym identyfikatorem zbioru, otrzymano "${datasetId}".`);
   }
 
-  const searchMaxLimit = readInt(env, "SEARCH_MAX_LIMIT", 50, 1, 500);
+  const searchMaxLimit = readInt(env, "SEARCH_MAX_LIMIT", 500, 1, 500);
   const searchDefaultLimit = readInt(env, "SEARCH_DEFAULT_LIMIT", 20, 1, 500);
   if (searchDefaultLimit > searchMaxLimit) {
     throw new ConfigError("SEARCH_DEFAULT_LIMIT nie może być większy niż SEARCH_MAX_LIMIT.");
@@ -153,6 +159,8 @@ export function loadConfig(env: Env = process.env, cwd: string = process.cwd()):
       readOptional(env, "MZ_OBWIESZCZENIA_URL")?.toLowerCase() === "off"
         ? null
         : readUrl(env, "MZ_OBWIESZCZENIA_URL", DEFAULT_MZ_OBWIESZCZENIA_URL),
+    rplCsvUrl:
+      readOptional(env, "RPL_CSV_URL")?.toLowerCase() === "off" ? null : readUrl(env, "RPL_CSV_URL", RPL_CSV_URL),
     fetchTimeoutMs: readInt(env, "FETCH_TIMEOUT_MS", 30_000, 1_000, 600_000),
     searchDefaultLimit,
     searchMaxLimit,

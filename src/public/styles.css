@@ -478,6 +478,50 @@ main {
   gap: 0.5rem;
 }
 
+/* „Pokaż więcej wyników” – dociąga kolejne opakowania, gdy w bazie jest więcej dopasowań. */
+.load-more {
+  display: grid;
+  justify-items: center;
+  gap: 0.35rem;
+  margin-top: 0.75rem;
+}
+
+.load-more[hidden] {
+  display: none;
+}
+
+.load-more-btn {
+  font: inherit;
+  font-weight: 600;
+  padding: 0.55rem 1.1rem;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--primary);
+  cursor: pointer;
+}
+
+.load-more-btn:hover:not(:disabled) {
+  background: var(--primary-soft);
+  border-color: var(--primary-hover);
+}
+
+.load-more-btn:focus-visible {
+  outline: 3px solid var(--primary-ring);
+  outline-offset: 2px;
+}
+
+.load-more-btn:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+
+.load-more-info {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--text-muted);
+}
+
 /* Karta grupy: nazwa + dawka + postać, z pigułkami opakowań w dolnym wierszu. */
 .result-card {
   background: var(--surface);
@@ -765,8 +809,12 @@ main {
   font-size: 0.9375rem;
 }
 
+/* Przy lekach z kilkudziesięcioma odpowiednikami przewija się tylko tabela, a nie cała strona. */
 .table-wrap {
+  max-height: 340px;
+  overflow-y: auto;
   overflow-x: auto;
+  overscroll-behavior: contain;
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
 }
@@ -817,12 +865,17 @@ thead th.num {
 }
 
 thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
   font-size: 0.75rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.04em;
   color: var(--text-subtle);
+  background: var(--surface);
   border-bottom: 1px solid var(--border);
+  box-shadow: 0 1px 0 var(--border);
 }
 
 tbody tr + tr td {
@@ -969,15 +1022,22 @@ fieldset[hidden] {
 /* ------------------------------------------------------------------ Apteki w pobliżu */
 
 .pharmacy-finder {
-  margin-top: 1.25rem;
-  padding-top: 1.1rem;
-  border-top: 1px solid var(--border);
+  margin-top: 1rem;
+  padding: 0.8rem 0.9rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-muted);
+}
+
+/* Pod boksem „Najtańsza opcja” – odstęp od tabeli zamienników poniżej. */
+.details .pharmacy-finder {
+  margin: 0 0 1rem;
 }
 
 .pharmacy-title {
-  font-size: 1rem;
+  font-size: 0.9375rem;
   font-weight: 700;
-  margin-bottom: 0.65rem;
+  margin-bottom: 0.5rem;
 }
 
 .pharmacy-form {
@@ -1137,13 +1197,10 @@ fieldset[hidden] {
   color: var(--text-subtle);
 }
 
+/* Pole i przycisk zawsze w jednym wierszu – także na telefonie. */
 @media (max-width: 599px) {
-  .pharmacy-form {
-    flex-direction: column;
-  }
-
   .pharmacy-btn {
-    padding-block: 0.6rem;
+    padding-inline: 0.8rem;
   }
 }
 
@@ -1151,6 +1208,271 @@ fieldset[hidden] {
   #pharmacy-q,
   .pharmacy-btn,
   .navigate-btn {
+    transition: none;
+  }
+}
+
+/* ------------------------------------------------------------------ v1.2.0: pasek postępu */
+
+.progress {
+  margin: 0.5rem 0 0.75rem;
+}
+
+.progress[hidden] {
+  display: none;
+}
+
+.progress-track {
+  height: 8px;
+  border-radius: 999px;
+  background: var(--border);
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  width: 0%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--primary), var(--primary-hover));
+  background-size: 200% 100%;
+  animation: progress-shine 1.6s linear infinite;
+  transition: width 0.45s ease-out;
+}
+
+.progress.is-done .progress-fill {
+  background: var(--save);
+  animation: none;
+}
+
+.progress-label {
+  margin: 0.35rem 0 0;
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+@keyframes progress-shine {
+  from {
+    background-position: 200% 0;
+  }
+  to {
+    background-position: 0 0;
+  }
+}
+
+/* ------------------------------------------------------------------ v1.2.0: pigułka cache */
+
+.status-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem 0.6rem;
+  margin: 0;
+}
+
+.pharmacy-status-line {
+  margin-top: 0.5rem;
+}
+
+.cache-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.1rem 0.55rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-subtle);
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.cache-pill[hidden] {
+  display: none;
+}
+
+.cache-pill.is-cached {
+  color: var(--save-strong);
+  background: var(--save-bg);
+  border-color: var(--save-border);
+}
+
+.cache-pill.is-live {
+  color: var(--info-text);
+  background: var(--info-bg);
+  border-color: var(--info-border);
+}
+
+.cache-pill.is-fallback {
+  color: var(--warn-text);
+  background: var(--warn-bg);
+  border-color: var(--warn-border);
+}
+
+/* ------------------------------------------------------------------ v1.2.0: filtry Rp / OTC */
+
+.category-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin: 0 0 0.75rem;
+  padding: 0;
+  border: 0;
+}
+
+.category-filters[hidden] {
+  display: none;
+}
+
+.category-pill .count {
+  display: inline-block;
+  min-width: 1.5em;
+  margin-left: 0.3rem;
+  padding: 0 0.35rem;
+  border-radius: 999px;
+  background: var(--surface-muted);
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.category-pill[aria-pressed="true"] .count {
+  background: rgba(255, 255, 255, 0.25);
+  color: inherit;
+}
+
+.category-pill:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* ------------------------------------------------------------------ v1.2.0: etykiety i boksy */
+
+.tag-otc,
+.tag-rp,
+.tag-example {
+  margin-left: 0.4rem;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  vertical-align: middle;
+}
+
+.tag-otc {
+  color: #7c2d12;
+  background: #ffedd5;
+  border: 1px solid #fed7aa;
+}
+
+.tag-rp {
+  color: var(--info-text);
+  background: var(--info-bg);
+  border: 1px solid var(--info-border);
+}
+
+.tag-example {
+  color: var(--warn-text);
+  background: var(--warn-bg);
+  border: 1px solid var(--warn-border);
+}
+
+.selected-drug .tag-otc,
+.selected-drug .tag-rp,
+.otc-notice .tag-otc {
+  margin-left: 0;
+}
+
+.average-box {
+  display: grid;
+  gap: 0.15rem;
+  margin: 0 0 1rem;
+  padding: 0.75rem 0.9rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--info-border);
+  border-left: 4px solid var(--primary);
+  background: var(--info-bg);
+  color: var(--info-text);
+}
+
+.average-box .label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.average-price {
+  font-size: 1.25rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.average-comparison {
+  font-weight: 600;
+}
+
+.average-box.is-cheaper .average-comparison {
+  color: var(--save-strong);
+}
+
+.average-box.is-pricier .average-comparison {
+  color: var(--danger);
+}
+
+.average-meta {
+  color: var(--text-subtle);
+  font-size: 0.75rem;
+}
+
+.otc-notice {
+  margin: 0 0 1rem;
+  padding: 0.75rem 0.9rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid #fed7aa;
+  background: #fff7ed;
+  color: #7c2d12;
+  font-size: 0.875rem;
+}
+
+.otc-notice p {
+  margin: 0.4rem 0 0;
+}
+
+.otc-notice a {
+  color: inherit;
+  font-weight: 700;
+}
+
+/* ------------------------------------------------------------------ v1.2.0: lista aptek */
+
+.pharmacy-results {
+  margin-top: 0.5rem;
+}
+
+.pharmacy-results[hidden] {
+  display: none;
+}
+
+.pharmacy-results > summary {
+  cursor: pointer;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
+.pharmacy-results.is-fallback > summary {
+  color: var(--warn-text);
+}
+
+.pharmacy-card.is-fallback {
+  border-style: dashed;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .progress-fill {
+    animation: none;
     transition: none;
   }
 }

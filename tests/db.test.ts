@@ -30,6 +30,7 @@ import {
   sanitizeSearchTerm,
   toSqlPath,
 } from "../src/db";
+import { BUILTIN_OTC } from "../src/otc";
 import type { DrugRecord } from "../src/types";
 
 const FIXTURE = resolve(import.meta.dir, "fixtures", "sample_leki.csv");
@@ -48,6 +49,9 @@ function drug(overrides: Partial<DrugRecord>): DrugRecord {
     doplata_pacjenta: 10,
     cena_detaliczna: 20,
     wskazanie: "",
+    kategoriaDostepnosci: "Rp",
+    czyRefundowany: true,
+    kodAtc: null,
     ...overrides,
   };
 }
@@ -229,13 +233,14 @@ describe("budowa pliku Parquet", () => {
   test("buduje Parquet (ZSTD) z próbki i zapisuje metadane", async () => {
     const parquet = join(workDir, "probka.parquet");
     const meta = await buildFromFallback(FIXTURE, parquet);
-    expect(meta.rows).toBe(35);
+    expect(meta.rows).toBe(35 + BUILTIN_OTC.length);
+    expect(meta.rows_rp).toBe(35);
     expect(meta.source).toBe("fallback-demo");
     expect(existsSync(parquet)).toBe(true);
     expect(await isValidParquet(parquet)).toBe(true);
 
     const saved = JSON.parse(await readFile(metaPathFor(parquet), "utf8"));
-    expect(saved.rows).toBe(35);
+    expect(saved.rows).toBe(35 + BUILTIN_OTC.length);
 
     const instance = await DuckDBInstance.create(":memory:");
     const conn = await instance.connect();
@@ -369,7 +374,8 @@ describe("budowa pliku Parquet", () => {
       log: (m) => messages.push(m),
     });
     expect(meta.source).toBe("fallback-demo");
-    expect(meta.rows).toBe(35);
+    expect(meta.rows).toBe(35 + BUILTIN_OTC.length);
+    expect(meta.rows_rp).toBe(35);
     expect(messages.length).toBe(1);
     expect(await isValidParquet(parquet)).toBe(true);
   });
@@ -397,15 +403,22 @@ describe("DrugDatabase – zapytania DuckDB", () => {
 
   afterAll(() => db.close());
 
-  test("wczytuje 35 pozycji z próbki w trybie demo", () => {
-    expect(db.rowCount).toBe(35);
+  test("wczytuje 35 leków Rp z próbki i wbudowane leki OTC w trybie demo", () => {
+    expect(db.rowCount).toBe(35 + BUILTIN_OTC.length);
+    expect(db.meta.rows_rp).toBe(35);
+    expect(db.meta.rows_otc).toBe(BUILTIN_OTC.length);
     expect(db.source).toBe("fallback-demo");
   });
 
   test("wyszukuje po nazwie handlowej bez względu na wielkość liter", async () => {
     const { data, durationMs } = await db.search("SORTIS", 10);
-    expect(data.count).toBe(1);
+    // Dokładne trafienie nazwy na górze, pod nim pozostałe leki z tą samą substancją (alias „sortis”).
+    expect(data.count).toBe(5);
     expect(data.items[0]?.nazwa).toBe("Sortis");
+    expect(data.items[0]?.dopasowanie).toBe("nazwa");
+    expect(
+      data.items.slice(1).every((i) => i.dopasowanie === "alias" && i.substancja_czynna === "Atorvastatinum"),
+    ).toBe(true);
     expect(data.items[0]?.liczba_zamiennikow).toBe(4);
     expect(data.items[0]?.najnizsza_doplata_w_grupie).toBe(2.6);
     expect(data.items[0]?.mozliwa_oszczednosc).toBe(82.4);
@@ -414,7 +427,10 @@ describe("DrugDatabase – zapytania DuckDB", () => {
 
   test("wyszukuje po substancji czynnej (INN)", async () => {
     const { data } = await db.search("atorvastatinum", 20);
+    expect(data.matchMode).toBe("direct");
+    // Same trafienia dokładne – podobne statyny (wyniki przybliżone) nie są dokładane.
     expect(data.count).toBe(5);
+    expect(data.items.every((i) => i.dopasowanie === "substancja")).toBe(true);
     expect(new Set(data.items.map((i) => i.substancja_czynna))).toEqual(new Set(["Atorvastatinum"]));
   });
 
@@ -422,6 +438,7 @@ describe("DrugDatabase – zapytania DuckDB", () => {
     const { data } = await db.search("nadcisnienie", 50);
     expect(data.count).toBe(13);
     expect(data.items.every((i) => foldText(i.wskazanie).includes("nadcisnienie"))).toBe(true);
+    expect(data.items.every((i) => i.dopasowanie === "objawy")).toBe(true);
   });
 
   test("wyszukuje po kodzie EAN", async () => {

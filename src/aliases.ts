@@ -9,7 +9,8 @@
  * Moduł jest czysty (bez I/O) – w pełni testowalny jednostkowo.
  */
 
-import type { SubstanceDescription } from "./types";
+import { atcGroup } from "./atc";
+import type { KategoriaDostepnosci, SubstanceDescription } from "./types";
 
 /** Opis substancji czynnej dla pacjenta (kategoria, zastosowanie, sposób przyjmowania). */
 export type SubstanceInfo = Pick<SubstanceDescription, "kategoria" | "naCoPomaga" | "jakStosowac">;
@@ -805,7 +806,7 @@ const SUBSTANCES: Readonly<Record<string, SubstanceEntry>> = {
     jakStosowac:
       "Doustnie, popijając wodą; dawkę początkową i kolejne po każdym luźnym stolcu wg ulotki. Uzupełniać płyny; " +
       "nie stosować przy gorączce i krwi w stolcu.",
-    aliasy: ["stoperan", "laremide", "loperamid", "imodium", "loperamide", "loperamid wzf"],
+    aliasy: ["stoperan", "laremid", "laremide", "loperamid", "imodium", "loperamide", "loperamid wzf"],
   },
   Diosmectitum: {
     kategoria: "Lek przeciwbiegunkowy (adsorbent)",
@@ -1442,6 +1443,283 @@ const SUBSTANCES: Readonly<Record<string, SubstanceEntry>> = {
     jakStosowac: OKO,
     aliasy: ["timolol", "timoptic", "cusimolol", "nyolol"],
   },
+
+  /* ====================================================================== */
+  /*  Najpopularniejsze leki bez recepty (OTC) – v1.2.0                     */
+  /* ====================================================================== */
+
+  /* ---------------------------------------------------- Katar, nos, zatoki */
+  Xylometazolinum: {
+    kategoria: "Lek udrażniający nos (bez recepty)",
+    naCoPomaga: "Obkurcza naczynia błony śluzowej nosa – szybko udrażnia nos przy katarze i zapaleniu zatok.",
+    jakStosowac: `${NOS} Nie stosować dłużej niż 5–7 dni, bo grozi to polekowym nieżytem nosa.`,
+    aliasy: [
+      "otrivin",
+      "otrivin baby",
+      "sudafed xylospray",
+      "xylometazolin",
+      "ksylometazolina",
+      "xylorin",
+      "olynth",
+      "nasic",
+      "xylogel",
+    ],
+  },
+  Oxymetazolinum: {
+    kategoria: "Lek udrażniający nos (bez recepty)",
+    naCoPomaga: "Długo (do 12 godzin) udrażnia nos przy katarze, alergii i zapaleniu zatok.",
+    jakStosowac: `${NOS} Zwykle 2 razy na dobę, nie dłużej niż 5–7 dni.`,
+    aliasy: ["nasivin", "nasivin soft", "nasivin baby", "oksymetazolina", "oxymetazoline", "afrin"],
+  },
+  Naphazolinum: {
+    kategoria: "Lek udrażniający nos (bez recepty)",
+    naCoPomaga: "Obkurcza naczynia błony śluzowej nosa i zmniejsza obrzęk przy katarze.",
+    jakStosowac: `${NOS} Krótkotrwale, nie dłużej niż 5 dni; nie stosować u małych dzieci.`,
+    aliasy: ["rhinazin", "nafazolina", "naphazoline", "sulfarinol"],
+  },
+  Pseudoephedrinum: {
+    kategoria: "Lek na katar i zatkany nos (doustny)",
+    naCoPomaga: "Zmniejsza obrzęk błony śluzowej nosa i zatok – udrażnia nos przy przeziębieniu.",
+    jakStosowac:
+      "Doustnie, zgodnie z ulotką, krótkotrwale. Nie stosować przy nadciśnieniu i chorobach serca bez konsultacji.",
+    aliasy: ["sudafed", "pseudoefedryna", "pseudoephedrine"],
+  },
+  Dexpanthenolum: {
+    kategoria: "Lek regenerujący skórę i błony śluzowe",
+    naCoPomaga: "Przyspiesza gojenie podrażnionej skóry, otarć, oparzeń słonecznych i błony śluzowej nosa.",
+    jakStosowac: "Miejscowo na skórę lub do nosa kilka razy dziennie, zgodnie z ulotką.",
+    aliasy: ["bepanthen", "d-panthenol", "panthenol", "dekspantenol", "dexpanthenol"],
+  },
+
+  /* ---------------------------------------------------- Gardło i jama ustna */
+  Flurbiprofenum: {
+    kategoria: "Lek przeciwzapalny na ból gardła",
+    naCoPomaga: "Łagodzi silny ból, obrzęk i stan zapalny gardła – działa przeciwzapalnie i przeciwbólowo.",
+    jakStosowac:
+      "Pastylkę powoli ssać (nie połykać w całości), co 3–6 godzin, maks. 5 pastylek na dobę, nie dłużej niż 3 dni.",
+    aliasy: ["strepsils intensive", "strepsils intensive bez cukru", "flurbiprofen", "flurbiprofen spray"],
+  },
+  Amylmetacresolum: {
+    kategoria: "Lek odkażający na ból gardła",
+    naCoPomaga: "Działa odkażająco w jamie ustnej i gardle, łagodzi ból i drapanie gardła.",
+    jakStosowac: "Pastylkę powoli ssać co 2–3 godziny, zgodnie z ulotką; nie jeść i nie pić tuż po zastosowaniu.",
+    aliasy: ["strepsils", "strepsils miód i cytryna", "neo-angin", "neoangin", "amylometakrezol"],
+  },
+  Benzydaminum: {
+    kategoria: "Lek przeciwzapalny do jamy ustnej i gardła",
+    naCoPomaga: "Łagodzi ból i stan zapalny gardła, dziąseł i jamy ustnej, np. przy anginie i aftach.",
+    jakStosowac: "Płukać gardło lub rozpylać aerozol 2–6 razy dziennie; pastylki powoli ssać. Nie połykać płynu.",
+    aliasy: ["tantum verde", "tantum verde forte", "hascosept", "benzydamina", "benzydamine", "septolete total"],
+  },
+  "Cholini salicylas": {
+    kategoria: "Lek przeciwbólowy do jamy ustnej",
+    naCoPomaga: "Łagodzi ból i stan zapalny jamy ustnej, dziąseł i gardła – np. przy aftach i ząbkowaniu.",
+    jakStosowac: "Miejscowo w jamie ustnej (żel na dziąsła) lub pastylki do ssania, zgodnie z ulotką.",
+    aliasy: ["cholinex", "sachol", "bonjela", "salicylan choliny", "choline salicylate"],
+  },
+  "Cetylpyridinii chloridum": {
+    kategoria: "Lek odkażający jamę ustną i gardło",
+    naCoPomaga: "Działa antyseptycznie w jamie ustnej i gardle, łagodzi ból gardła przy infekcjach.",
+    jakStosowac: "Pastylkę powoli ssać co 2–3 godziny, nie więcej niż zaleca ulotka.",
+    aliasy: ["septolete", "septolete plus", "chlorek cetylopirydyniowy", "cetylpyridinium"],
+  },
+
+  /* ---------------------------------------------------- Kaszel */
+  "Butamirati citras": {
+    kategoria: "Lek przeciwkaszlowy na kaszel suchy",
+    naCoPomaga: "Hamuje odruch kaszlu – łagodzi męczący, suchy kaszel, np. przy przeziębieniu.",
+    jakStosowac: "Doustnie przed posiłkiem, zgodnie z ulotką. Nie łączyć z lekami wykrztuśnymi.",
+    aliasy: ["sinecod", "supremin", "butamirat", "butamirate", "omnitus"],
+  },
+  Dextromethorphanum: {
+    kategoria: "Lek przeciwkaszlowy na kaszel suchy",
+    naCoPomaga: "Hamuje ośrodek kaszlu – łagodzi suchy, męczący kaszel.",
+    jakStosowac: "Doustnie, co 6–8 godzin zgodnie z ulotką. Nie łączyć z alkoholem i lekami wykrztuśnymi.",
+    aliasy: ["acodin", "tussidex", "dekstrometorfan", "dextromethorphan"],
+  },
+  Guaifenesinum: {
+    kategoria: K_KASZEL,
+    naCoPomaga: "Rozrzedza wydzielinę w oskrzelach i ułatwia odkrztuszanie przy kaszlu mokrym.",
+    jakStosowac: WYKRZTUSNY,
+    aliasy: ["robitussin expectorans", "gwajafenezyna", "guaifenesin", "guajazyl"],
+  },
+
+  /* ---------------------------------------------------- Żołądek i jelita */
+  Simeticonum: {
+    kategoria: "Lek na wzdęcia",
+    naCoPomaga: "Rozbija pęcherzyki gazu w jelitach – łagodzi wzdęcia, uczucie pełności i kolki (także u niemowląt).",
+    jakStosowac: "Doustnie, po posiłkach i przed snem, zgodnie z ulotką. Można stosować długotrwale.",
+    aliasy: ["espumisan", "espumisan l", "simetikon", "simethicone", "sab simplex", "bobotic", "infacol"],
+  },
+  "Calcii carbonas + Magnesii subcarbonas": {
+    kategoria: "Lek zobojętniający kwas żołądkowy",
+    naCoPomaga: "Szybko zobojętnia nadmiar kwasu w żołądku – łagodzi zgagę, pieczenie i niestrawność.",
+    jakStosowac:
+      "Tabletkę ssać lub żuć doraźnie przy objawach, zwykle po posiłku. Zachować 2 godziny odstępu od innych leków.",
+    aliasy: ["rennie", "rennie bez cukru", "rennie spearmint"],
+  },
+  "Natrii alginas": {
+    kategoria: "Lek na zgagę i refluks",
+    naCoPomaga: "Tworzy na treści żołądka barierę ochronną, która zapobiega cofaniu się kwasu do przełyku.",
+    jakStosowac: "Doustnie po posiłkach i przed snem; zawiesinę wstrząsnąć przed użyciem.",
+    aliasy: ["gaviscon", "gaviscon double action", "alginian sodu", "alginate"],
+  },
+  Racecadotrilum: {
+    kategoria: "Lek przeciwbiegunkowy",
+    naCoPomaga: "Zmniejsza nadmierne wydzielanie wody do jelit – skraca ostrą biegunkę.",
+    jakStosowac: "Doustnie, zgodnie z ulotką, razem z nawadnianiem doustnym; nie dłużej niż 3 dni bez konsultacji.",
+    aliasy: ["hidrasec", "tiorfan", "racekadotryl", "racecadotril"],
+  },
+  Bisacodylum: {
+    kategoria: "Lek przeczyszczający",
+    naCoPomaga: "Pobudza perystaltykę jelit – ułatwia wypróżnienie przy zaparciu.",
+    jakStosowac: "Doustnie wieczorem (działa po 6–12 h) lub w czopku (po 15–60 min); krótkotrwale.",
+    aliasy: ["bisacodyl", "bisakodyl", "dulcobis", "dulcolax"],
+  },
+  Macrogolum: {
+    kategoria: "Lek przeczyszczający (osmotyczny)",
+    naCoPomaga: "Zatrzymuje wodę w jelicie i zmiękcza stolec – łagodnie leczy zaparcia.",
+    jakStosowac: "Proszek rozpuścić w szklance wody i wypić, zwykle rano; efekt po 1–2 dniach.",
+    aliasy: ["forlax", "makrogol", "macrogol", "xenna balance"],
+  },
+  Sennosidum: {
+    kategoria: "Lek przeczyszczający (roślinny)",
+    naCoPomaga: "Pobudza pracę jelit przy zaparciu.",
+    jakStosowac: "Doustnie wieczorem, krótkotrwale (do 1–2 tygodni).",
+    aliasy: ["xenna", "xenna extra", "senes", "sennozydy"],
+  },
+  Hymecromonum: {
+    kategoria: "Lek na drogi żółciowe",
+    naCoPomaga: "Rozkurcza drogi żółciowe i ułatwia odpływ żółci – łagodzi dolegliwości po tłustych posiłkach.",
+    jakStosowac: "Doustnie przed posiłkami, zgodnie z ulotką.",
+    aliasy: ["cholestil", "hymekromon", "hymecromone"],
+  },
+
+  /* ---------------------------------------------------- Nogi, żyły, siniaki */
+  Diosminum: {
+    kategoria: "Lek na żylaki i ciężkie nogi",
+    naCoPomaga:
+      "Wzmacnia i uszczelnia naczynia żylne – łagodzi uczucie ciężkich nóg, obrzęki, żylaki i objawy hemoroidów.",
+    jakStosowac: "Doustnie w trakcie posiłku, regularnie przez kilka tygodni – efekt narasta stopniowo.",
+    aliasy: ["diohespan", "diohespan max", "diosminex", "detralex", "otrex", "diosmina", "diosmin", "phlebodia"],
+  },
+  Troxerutinum: {
+    kategoria: "Lek na żylaki i obrzęki nóg",
+    naCoPomaga: "Uszczelnia naczynia krwionośne, zmniejsza obrzęki, uczucie ciężkich nóg i skłonność do siniaków.",
+    jakStosowac: "Doustnie w trakcie posiłku lub żel wmasować w skórę nóg 2 razy dziennie.",
+    aliasy: ["troxevasin", "trokserutyna", "troxerutin"],
+  },
+  Aescinum: {
+    kategoria: "Lek przeciwobrzękowy",
+    naCoPomaga: "Zmniejsza obrzęki, stłuczenia i uczucie ciężkich nóg (escyna z kasztanowca).",
+    jakStosowac: "Doustnie po posiłku lub żel cienką warstwą na skórę, zgodnie z ulotką.",
+    aliasy: ["aescin", "escyna", "reparil", "venescin"],
+  },
+  Heparinum: {
+    kategoria: "Lek przeciwzakrzepowy (w żelu – na siniaki)",
+    naCoPomaga:
+      "W żelu przyspiesza wchłanianie siniaków i krwiaków, łagodzi obrzęki i stany zapalne żył powierzchownych.",
+    jakStosowac:
+      "Żel nakładać na skórę i delikatnie wmasować 1–3 razy dziennie. Postać do wstrzykiwań – wyłącznie wg zaleceń lekarza.",
+    aliasy: ["lioton", "lioton 1000", "heparyna", "heparin", "hepatrombin"],
+  },
+
+  /* ---------------------------------------------------- Alergia, świąd */
+  "Dimetindeni maleas": {
+    kategoria: "Lek przeciwalergiczny i przeciwświądowy",
+    naCoPomaga: "Łagodzi świąd, pokrzywkę, ukąszenia owadów, oparzenia słoneczne i objawy alergii.",
+    jakStosowac: "Żel cienką warstwą na swędzącą skórę 2–4 razy dziennie; krople doustnie zgodnie z ulotką.",
+    aliasy: ["fenistil", "fenistil żel", "dimetynden", "dimetindene"],
+  },
+  Clemastinum: {
+    kategoria: K_ALERGIA,
+    naCoPomaga: "Łagodzi objawy alergii – katar sienny, pokrzywkę i świąd skóry.",
+    jakStosowac: `${ANTYHISTAMINA} Nie łączyć z alkoholem.`,
+    aliasy: ["clemastinum", "klemastyna", "clemastine"],
+  },
+  Ketotifenum: {
+    kategoria: K_ALERGIA,
+    naCoPomaga: "Łagodzi alergiczne zapalenie spojówek – swędzenie, łzawienie i zaczerwienienie oczu.",
+    jakStosowac: OKO,
+    aliasy: ["zaditen", "ketotifen", "ketotifenum"],
+  },
+  Tetryzolinum: {
+    kategoria: "Krople do oczu na zaczerwienienie",
+    naCoPomaga: "Obkurcza naczynia spojówki – łagodzi zaczerwienienie i podrażnienie oczu.",
+    jakStosowac: `${OKO} Krótkotrwale, nie dłużej niż kilka dni.`,
+    aliasy: ["starazolin", "visine", "tetryzolina", "tetryzoline"],
+  },
+  Hypromellosum: {
+    kategoria: "Sztuczne łzy (krople do oczu)",
+    naCoPomaga: "Nawilża oko i łagodzi uczucie suchości, pieczenia i zmęczenia oczu (np. przy pracy przy komputerze).",
+    jakStosowac: `${OKO} Można stosować wielokrotnie w ciągu dnia.`,
+    aliasy: ["artelac", "hypromeloza", "hypromellose", "oculotect"],
+  },
+
+  /* ---------------------------------------------------- Skóra */
+  Clotrimazolum: {
+    kategoria: "Lek przeciwgrzybiczy",
+    naCoPomaga: "Zwalcza grzybice skóry (np. stóp i pachwin) oraz drożdżycę pochwy.",
+    jakStosowac:
+      "Krem na skórę 2–3 razy dziennie jeszcze przez 2 tygodnie po ustąpieniu objawów; postacie dopochwowe – wieczorem.",
+    aliasy: ["clotrimazolum", "clotrimazol", "klotrimazol", "canesten", "clotrimazole"],
+  },
+  Terbinafinum: {
+    kategoria: "Lek przeciwgrzybiczy",
+    naCoPomaga: "Zwalcza grzybicę stóp (stopę atlety), skóry i paznokci.",
+    jakStosowac: "Na skórę 1–2 razy dziennie zgodnie z ulotką; tabletki (Rp) – wyłącznie wg zaleceń lekarza.",
+    aliasy: ["lamisil", "lamisilatt", "terbisil", "terbinafina", "terbinafine"],
+  },
+  Hydrocortisonum: {
+    kategoria: "Słaby steroid na skórę",
+    naCoPomaga: "Łagodzi świąd, zaczerwienienie i stan zapalny skóry, np. po ukąszeniach i przy egzemie.",
+    jakStosowac: "Cienką warstwą na zmienioną skórę 1–2 razy dziennie, krótkotrwale; nie stosować na twarz bez porady.",
+    aliasy: ["hydrokortyzon", "hydrocortisone", "hydrocortisonum", "laticort"],
+  },
+  "Zinci oxidum": {
+    kategoria: "Środek ochronny i wysuszający na skórę",
+    naCoPomaga: "Chroni, wysusza i łagodzi podrażnioną skórę – odparzenia, pieluszkowe zapalenie skóry, drobne rany.",
+    jakStosowac: "Cienką warstwą na czystą, suchą skórę kilka razy dziennie.",
+    aliasy: ["maść cynkowa", "tlenek cynku", "sudocrem", "zinc oxide"],
+  },
+
+  /* ---------------------------------------------------- Witaminy, minerały, sen, inne */
+  "Acidum ascorbicum": {
+    kategoria: "Witamina C",
+    naCoPomaga: "Uzupełnia niedobór witaminy C, wspiera odporność i uszczelnia naczynia krwionośne.",
+    jakStosowac: "Doustnie, po posiłku, popijając wodą; nie przekraczać zalecanej dawki dobowej.",
+    aliasy: ["rutinoscorbin", "rutinacea", "witamina c", "vitaminum c", "cebion", "kwas askorbinowy", "vitamin c"],
+  },
+  "Magnesii lactas": {
+    kategoria: "Suplement magnezu",
+    naCoPomaga: "Uzupełnia niedobór magnezu – łagodzi skurcze mięśni, drżenie powiek, zmęczenie i rozdrażnienie.",
+    jakStosowac: "Doustnie, w trakcie posiłku, popijając wodą; dawkę dzielić na 2–3 porcje.",
+    aliasy: ["magne b6", "magne b6 forte", "magnez", "mleczan magnezu", "magnesium"],
+  },
+  Melatoninum: {
+    kategoria: "Lek ułatwiający zasypianie",
+    naCoPomaga: "Reguluje rytm snu i czuwania – ułatwia zasypianie, m.in. przy zmianie stref czasowych (jet lag).",
+    jakStosowac: "Doustnie 1–2 godziny przed snem, o stałej porze. Nie prowadzić pojazdów po zażyciu.",
+    aliasy: ["melatonina", "melatonin", "circadin", "melatonina lek-am"],
+  },
+  Nicotinum: {
+    kategoria: "Lek wspomagający rzucanie palenia",
+    naCoPomaga: "Łagodzi głód nikotynowy i objawy odstawienia papierosów.",
+    jakStosowac: "Zgodnie z ulotką – gumy żuć powoli, plastry naklejać raz na dobę; dawkę zmniejszać stopniowo.",
+    aliasy: ["nicorette", "niquitin", "nikotyna", "nicotine", "nicorette spray"],
+  },
+  Pyrantelum: {
+    kategoria: "Lek przeciwpasożytniczy",
+    naCoPomaga: "Zwalcza owsiki i glisty u dzieci i dorosłych.",
+    jakStosowac: "Doustnie, jednorazowo; dawkę powtórzyć po 2–3 tygodniach i leczyć wszystkich domowników.",
+    aliasy: ["pyrantelum", "pyrantel", "pyrantelum medana", "pirantel"],
+  },
+  Mebendazolum: {
+    kategoria: "Lek przeciwpasożytniczy",
+    naCoPomaga: "Zwalcza owsiki i inne robaki jelitowe.",
+    jakStosowac: "Doustnie zgodnie z ulotką, zwykle jednorazowo z powtórzeniem po 2–4 tygodniach.",
+    aliasy: ["vermox", "mebendazol", "mebendazole"],
+  },
 };
 
 /** Klucz porównawczy aliasu: małe litery, bez polskich znaków i bez separatorów („No-Spa” → „nospa”). */
@@ -1687,10 +1965,17 @@ const ALL_INDICATIONS = /^we wszystkich zarejestrowanych wskazaniach/i;
 const MAX_INDICATION_LENGTH = 280;
 
 /** Opis zastępczy dla substancji spoza słownika – na podstawie wskazania refundacyjnego i postaci. */
-export function fallbackDescription(wskazanie: string, postac: string): SubstanceDescription {
+export function fallbackDescription(
+  wskazanie: string,
+  postac: string,
+  kategoria: KategoriaDostepnosci = "Rp",
+): SubstanceDescription {
   const indication = wskazanie.trim().replace(/[.;\s]+$/, "");
   let naCoPomaga: string;
-  if (!indication || ALL_INDICATIONS.test(indication)) {
+  if (kategoria === "OTC" && !indication) {
+    naCoPomaga =
+      "Lek dostępny bez recepty – zastosowanie i przeciwwskazania opisuje ulotka; w razie wątpliwości zapytaj farmaceutę.";
+  } else if (!indication || ALL_INDICATIONS.test(indication)) {
     naCoPomaga =
       "Lek jest refundowany we wszystkich zarejestrowanych wskazaniach – szczegółowe zastosowanie opisuje ulotka; " +
       "w razie wątpliwości zapytaj lekarza lub farmaceutę.";
@@ -1702,10 +1987,39 @@ export function fallbackDescription(wskazanie: string, postac: string): Substanc
     naCoPomaga = `Stosowany m.in. w: ${short.replaceAll(";", ",")}.`;
   }
   return {
-    kategoria: "Lek refundowany",
+    kategoria: kategoria === "OTC" ? "Lek bez recepty (OTC)" : "Lek refundowany",
     naCoPomaga,
-    jakStosowac: routeHint(postac)?.text ?? "Stosować zgodnie z zaleceniem lekarza i ulotką dołączoną do opakowania.",
+    jakStosowac:
+      routeHint(postac)?.text ??
+      (kategoria === "OTC"
+        ? "Stosować zgodnie z ulotką dołączoną do opakowania; w razie wątpliwości zapytaj farmaceutę."
+        : "Stosować zgodnie z zaleceniem lekarza i ulotką dołączoną do opakowania."),
     zrodlo: "ogolny",
+    substancja: null,
+  };
+}
+
+/**
+ * Automatyczny opis grupy leku na podstawie prefiksu kodu ATC (null, gdy kod nieznany).
+ * Wskazówka stosowania pochodzi z postaci farmaceutycznej, a gdy jej nie rozpoznano – z grupy ATC.
+ * Dla leków refundowanych do opisu dołączane jest wskazanie refundacyjne MZ (jeśli jest konkretne).
+ */
+export function atcDescription(
+  kodAtc: string | null | undefined,
+  postac: string,
+  wskazanie = "",
+): SubstanceDescription | null {
+  const group = atcGroup(kodAtc);
+  if (group === null) return null;
+  const indication = wskazanie.trim().replace(/[.;\s]+$/, "");
+  const specific = indication && !ALL_INDICATIONS.test(indication) && indication.length <= MAX_INDICATION_LENGTH;
+  return {
+    kategoria: group.kategoria,
+    naCoPomaga: specific
+      ? `${group.naCoPomaga} Refundacja m.in. w: ${indication.replaceAll(";", ",")}.`
+      : group.naCoPomaga,
+    jakStosowac: routeHint(postac)?.text ?? group.jakStosowac,
+    zrodlo: "atc",
     substancja: null,
   };
 }
@@ -1716,14 +2030,19 @@ export interface DescribableDrug {
   substancja_czynna: string;
   postac: string;
   wskazanie: string;
+  /** Kod ATC (opcjonalny) – podstawa automatycznego opisu grupy, gdy substancji nie ma w słowniku. */
+  kodAtc?: string | null;
+  /** Kategoria dostępności (domyślnie „Rp”). */
+  kategoriaDostepnosci?: KategoriaDostepnosci;
 }
 
 /**
- * Zwraca opis „na co pomaga i jak stosować” dla leku z wykazu.
+ * Zwraca opis „na co pomaga i jak stosować” dla leku z bazy.
  *
- * Kolejność: substancja czynna z obwieszczenia → nazwa handlowa (słownik marek) → opis zastępczy
- * z pól `wskazanie` i `postac`. Gdy wskazówka ze słownika dotyczy innej drogi podania niż postać leku
- * (np. słownik: „Doustnie…”, a postać: krople do oczu, inhalator, wstrzyknięcie), wskazówka pochodzi z postaci.
+ * Kolejność: substancja czynna → nazwa handlowa (słownik marek) → grupa ATC ({@link atcDescription})
+ * → opis zastępczy z pól `wskazanie` i `postac`. Gdy wskazówka ze słownika dotyczy innej drogi podania niż
+ * postać leku (np. słownik: „Doustnie…”, a postać: krople do oczu, inhalator, wstrzyknięcie), wskazówka
+ * pochodzi z postaci.
  */
 export function describeDrug(drug: DescribableDrug): SubstanceDescription {
   let substance = matchKnownSubstance(drug.substancja_czynna);
@@ -1732,7 +2051,12 @@ export function describeDrug(drug: DescribableDrug): SubstanceDescription {
     if (viaBrand?.kind === "brand" && viaBrand.substance in SUBSTANCES) substance = viaBrand.substance;
   }
   const entry = substance ? SUBSTANCES[substance] : undefined;
-  if (!substance || !entry) return fallbackDescription(drug.wskazanie ?? "", drug.postac ?? "");
+  if (!substance || !entry) {
+    return (
+      atcDescription(drug.kodAtc, drug.postac ?? "", drug.wskazanie ?? "") ??
+      fallbackDescription(drug.wskazanie ?? "", drug.postac ?? "", drug.kategoriaDostepnosci ?? "Rp")
+    );
+  }
 
   const route = routeHint(drug.postac ?? "");
   const entryKind = entryRouteKind(entry.jakStosowac);

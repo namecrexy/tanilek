@@ -7,13 +7,17 @@ import { DrugDatabase } from "../src/db";
 import {
   buildOverpassQuery,
   clearPharmacyCache,
+  fallbackPharmacies,
   findNearbyPharmacies,
   haversineMeters,
   MAX_PHARMACIES,
   NOMINATIM_URL,
   NOT_FOUND_MESSAGE,
   OSM_USER_AGENT,
+  OVERPASS_MIRRORS,
+  OVERPASS_TIMEOUT_MS,
   OVERPASS_URL,
+  offsetPoint,
   PHARMACY_CACHE_TTL_MS,
   PharmacyLookupError,
   type PharmacySearchResult,
@@ -46,6 +50,8 @@ function mockOsm(options: {
   overpass?: OverpassHandler;
   overpassStatus?: number;
   throwOn?: "nominatim" | "overpass";
+  /** Serwery lustrzane Overpass, które mają zwrócić błąd sieci (pozostałe odpowiadają normalnie). */
+  failMirrors?: readonly string[];
 }): MockOsm {
   const calls: RecordedCall[] = [];
   const fetchFn = (async (input: string | URL | Request, init?: RequestInit) => {
@@ -60,8 +66,8 @@ function mockOsm(options: {
         },
       );
     }
-    if (url === OVERPASS_URL) {
-      if (options.throwOn === "overpass") throw new TypeError("fetch failed");
+    if (OVERPASS_MIRRORS.includes(url)) {
+      if (options.throwOn === "overpass" || options.failMirrors?.includes(url)) throw new TypeError("fetch failed");
       const query = new URLSearchParams(String(init?.body)).get("data") ?? "";
       const radius = Number(/around:(\d+),/.exec(query)?.[1]);
       return Response.json(options.overpass ? options.overpass(radius) : { elements: [] }, {
@@ -75,7 +81,7 @@ function mockOsm(options: {
     calls,
     overpassRadii: () =>
       calls
-        .filter((c) => c.url === OVERPASS_URL)
+        .filter((c) => OVERPASS_MIRRORS.includes(c.url))
         .map((c) => Number(/around:(\d+),/.exec(new URLSearchParams(String(c.init?.body)).get("data") ?? "")?.[1])),
   };
 }
@@ -226,7 +232,11 @@ describe("findNearbyPharmacies", () => {
     const osm = mockOsm({ overpass: () => NEAR_ELEMENTS });
     const first = await findNearbyPharmacies("Warszawa, Marszałkowska 10", { fetchFn: osm.fetchFn });
     const second = await findNearbyPharmacies("  warszawa,   MARSZAŁKOWSKA 10 ", { fetchFn: osm.fetchFn });
-    expect(second).toBe(first);
+    expect(first.cached).toBe(false);
+    expect(second.cached).toBe(true);
+    expect(second.pharmacies).toEqual(first.pharmacies);
+    expect(second.resolvedLocation).toEqual(first.resolvedLocation);
+    expect(typeof second.durationMs).toBe("number");
     expect(osm.calls).toHaveLength(2);
   });
 
@@ -256,14 +266,27 @@ describe("findNearbyPharmacies", () => {
   test.each([
     ["błąd sieci Nominatim", { throwOn: "nominatim" as const }],
     ["HTTP 503 z Nominatim", { geocodeStatus: 503 }],
-    ["błąd sieci Overpass", { throwOn: "overpass" as const }],
-    ["HTTP 429 z Overpass", { overpassStatus: 429 }],
-    ["niepoprawna odpowiedź Overpass", { overpass: () => ({ remark: "runtime error" }) }],
-  ])("502 – %s", async (_name, options) => {
+  ])("502 – %s (bez współrzędnych nie ma trybu awaryjnego)", async (_name, options) => {
     const osm = mockOsm(options);
     const error = await findNearbyPharmacies("00-001", { fetchFn: osm.fetchFn }).catch((e: unknown) => e);
     expect(error).toBeInstanceOf(PharmacyLookupError);
     expect((error as PharmacyLookupError).status).toBe(502);
+  });
+
+  test.each([
+    ["błąd sieci Overpass", { throwOn: "overpass" as const }],
+    ["HTTP 429 z Overpass", { overpassStatus: 429 }],
+    ["niepoprawna odpowiedź Overpass", { overpass: () => ({ remark: "runtime error" }) }],
+  ])("502 przy fallbackOnOverpassError: false – %s", async (_name, options) => {
+    const osm = mockOsm(options);
+    const error = await findNearbyPharmacies("00-001", {
+      fetchFn: osm.fetchFn,
+      fallbackOnOverpassError: false,
+    }).catch((e: unknown) => e);
+    expect(error).toBeInstanceOf(PharmacyLookupError);
+    expect((error as PharmacyLookupError).status).toBe(502);
+    // Każdy z 3 serwerów lustrzanych został odpytany dokładnie raz (bez drugiego promienia).
+    expect(osm.calls.filter((c) => OVERPASS_MIRRORS.includes(c.url)).map((c) => c.url)).toEqual([...OVERPASS_MIRRORS]);
   });
 });
 
@@ -346,11 +369,162 @@ describe("GET /api/pharmacies (zamockowany fetch)", () => {
     expect(((await res.json()) as { error: string }).error).toBe(NOT_FOUND_MESSAGE);
   });
 
-  test("502 z komunikatem po polsku przy awarii OpenStreetMap", async () => {
+  test("tryb awaryjny zamiast 502, gdy wszystkie serwery Overpass zawiodą", async () => {
     mode = "down";
     const res = await fetch(`${base}/api/pharmacies?q=awaria-osm`);
-    expect(res.status).toBe(502);
+    expect(res.status).toBe(200);
     expect(res.headers.get("cache-control")).toBe("no-store");
-    expect(((await res.json()) as { error: string }).error).toContain("OpenStreetMap");
+    expect(res.headers.get("etag")).toBeNull();
+    const body = (await res.json()) as PharmacySearchResult;
+    expect(body.isFallback).toBe(true);
+    expect(body.cached).toBe(false);
+    expect(body.fallbackReason).toContain("tryb awaryjny");
+    expect(body.pharmacies.length).toBeGreaterThan(0);
+  });
+
+  test("pola cached i durationMs w odpowiedzi", async () => {
+    const q = encodeURIComponent("Kraków, Rynek Główny 1");
+    const first = (await (await fetch(`${base}/api/pharmacies?q=${q}`)).json()) as PharmacySearchResult;
+    const second = (await (await fetch(`${base}/api/pharmacies?q=${q}`)).json()) as PharmacySearchResult;
+    expect(first.cached).toBe(false);
+    expect(first.isFallback).toBe(false);
+    expect(first.overpassServer).toBe(OVERPASS_URL);
+    expect(second.cached).toBe(true);
+    expect(first.durationMs).toBeGreaterThanOrEqual(0);
+    expect(second.durationMs).toBeGreaterThanOrEqual(0);
+  });
+});
+
+describe("failover serwerów Overpass i tryb awaryjny", () => {
+  test("zapytanie Overpass QL ma nagłówek [out:json][timeout:10]", () => {
+    expect(buildOverpassQuery(ORIGIN, 3000)).toStartWith("[out:json][timeout:10];");
+  });
+
+  test("lista 3 serwerów lustrzanych w ustalonej kolejności", () => {
+    expect(OVERPASS_MIRRORS).toEqual([
+      "https://overpass-api.de/api/interpreter",
+      "https://overpass.kumi.systems/api/interpreter",
+      "https://maps.mail.ru/osm/tools/overpass/api/interpreter",
+    ]);
+    expect(OVERPASS_URL).toBe(OVERPASS_MIRRORS[0] as string);
+    expect(OVERPASS_TIMEOUT_MS).toBe(8000);
+  });
+
+  test("każde zapytanie Overpass ma własny limit czasu (AbortSignal)", async () => {
+    const osm = mockOsm({ overpass: () => NEAR_ELEMENTS });
+    await findNearbyPharmacies("00-001", { fetchFn: osm.fetchFn });
+    const overpassCall = osm.calls.find((c) => OVERPASS_MIRRORS.includes(c.url));
+    expect(overpassCall?.init?.signal).toBeInstanceOf(AbortSignal);
+  });
+
+  test("przełącza się na drugi serwer, gdy pierwszy nie odpowiada", async () => {
+    const osm = mockOsm({ overpass: () => NEAR_ELEMENTS, failMirrors: [OVERPASS_MIRRORS[0] as string] });
+    const result = await findNearbyPharmacies("00-001", { fetchFn: osm.fetchFn });
+    expect(result.isFallback).toBe(false);
+    expect(result.overpassServer).toBe(OVERPASS_MIRRORS[1] as string);
+    expect(result.pharmacies.map((p) => p.distanceMeters)).toEqual([350, 900, 1400]);
+    expect(osm.calls.filter((c) => OVERPASS_MIRRORS.includes(c.url)).map((c) => c.url)).toEqual([
+      OVERPASS_MIRRORS[0] as string,
+      OVERPASS_MIRRORS[1] as string,
+    ]);
+  });
+
+  test("rotacja: kolejne zapytanie zaczyna od serwera, który ostatnio odpowiedział", async () => {
+    const osm = mockOsm({
+      overpass: () => NEAR_ELEMENTS,
+      failMirrors: [OVERPASS_MIRRORS[0] as string, OVERPASS_MIRRORS[1] as string],
+    });
+    const first = await findNearbyPharmacies("00-001", { fetchFn: osm.fetchFn });
+    expect(first.overpassServer).toBe(OVERPASS_MIRRORS[2] as string);
+    const before = osm.calls.length;
+    await findNearbyPharmacies("30-001 Kraków", { fetchFn: osm.fetchFn });
+    const next = osm.calls.slice(before).filter((c) => OVERPASS_MIRRORS.includes(c.url));
+    expect(next.map((c) => c.url)).toEqual([OVERPASS_MIRRORS[2] as string]);
+  });
+
+  test("HTTP 504 z pierwszego i błąd z drugiego serwera – dane z trzeciego", async () => {
+    let attempt = 0;
+    const fetchFn = (async (input: string | URL | Request) => {
+      const url = typeof input === "string" ? input : input instanceof URL ? input.href : input.url;
+      if (url.startsWith(NOMINATIM_URL)) {
+        return Response.json([{ lat: String(ORIGIN.lat), lon: String(ORIGIN.lon), display_name: "Warszawa" }]);
+      }
+      attempt++;
+      if (url === OVERPASS_MIRRORS[0]) return new Response("Gateway Timeout", { status: 504 });
+      if (url === OVERPASS_MIRRORS[1]) throw new DOMException("The operation timed out.", "TimeoutError");
+      return Response.json(NEAR_ELEMENTS);
+    }) as typeof fetch;
+    const result = await findNearbyPharmacies("00-001", { fetchFn });
+    expect(attempt).toBe(3);
+    expect(result.overpassServer).toBe(OVERPASS_MIRRORS[2] as string);
+    expect(result.pharmacies).toHaveLength(3);
+  });
+
+  test("wszystkie serwery zawiodły – przykładowe apteki z isFallback i dystansem Haversine'a", async () => {
+    const osm = mockOsm({ throwOn: "overpass" });
+    const result = await findNearbyPharmacies("00-001", { fetchFn: osm.fetchFn });
+    expect(result.isFallback).toBe(true);
+    expect(result.overpassServer).toBeNull();
+    expect(result.cached).toBe(false);
+    expect(result.fallbackReason).toBeString();
+    expect(result.resolvedLocation).toEqual({ ...ORIGIN, displayName: "Warszawa" });
+    expect(result.pharmacies.length).toBeGreaterThanOrEqual(5);
+    const distances = result.pharmacies.map((p) => p.distanceMeters);
+    expect(distances).toEqual([...distances].sort((a, b) => a - b));
+    for (const p of result.pharmacies) {
+      expect(p.distanceMeters).toBe(Math.round(haversineMeters(ORIGIN, p)));
+      expect(p.navigationUrl).toStartWith("https://www.google.com/maps/search/apteka/");
+      expect(p.address).toContain("przykładowa");
+    }
+    // Pierwsza przykładowa apteka leży ok. 320 m od wyszukanego punktu (tolerancja przybliżenia ±1%).
+    expect(Math.abs((distances[0] as number) - 320)).toBeLessThan(4);
+  });
+
+  test("tryb awaryjny nie trafia do cache – kolejne zapytanie znów odpytuje Overpass", async () => {
+    const osm = mockOsm({ throwOn: "overpass" });
+    await findNearbyPharmacies("00-001", { fetchFn: osm.fetchFn });
+    const before = osm.calls.length;
+    const again = await findNearbyPharmacies("00-001", { fetchFn: osm.fetchFn });
+    expect(again.isFallback).toBe(true);
+    expect(osm.calls.length - before).toBe(1 + OVERPASS_MIRRORS.length);
+  });
+
+  test("fallbackPharmacies i offsetPoint są deterministyczne", () => {
+    const location = { ...ORIGIN, displayName: "Śródmieście, Warszawa" };
+    expect(fallbackPharmacies(location)).toEqual(fallbackPharmacies(location));
+    expect(fallbackPharmacies(location)[0]?.address).toBe("okolice: Śródmieście (przykładowa lokalizacja)");
+    const moved = offsetPoint(ORIGIN, 1000, 0);
+    expect(Math.round(haversineMeters(ORIGIN, moved))).toBeGreaterThan(995);
+    expect(Math.round(haversineMeters(ORIGIN, moved))).toBeLessThan(1005);
+  });
+});
+
+describe("GET /api/pharmacies – fallback wyłączony", () => {
+  test("502 z komunikatem po polsku, gdy pharmacyFallback: false", async () => {
+    const workDir = await mkdtemp(join(tmpdir(), "tanilek-apteki-502-"));
+    const config = loadConfig(
+      { NODE_ENV: "test", PORT: "0", DATA_FILE_PATH: join(workDir, "leki.parquet"), FALLBACK_CSV_PATH: FIXTURE },
+      workDir,
+    );
+    const db = await DrugDatabase.open({ dataFilePath: config.dataFilePath, fallbackCsvPath: config.fallbackCsvPath });
+    const down = mockOsm({ throwOn: "overpass" });
+    const server = await createServer({
+      config,
+      db,
+      port: 0,
+      hostname: "127.0.0.1",
+      pharmacyFetch: down.fetchFn,
+      pharmacyFallback: false,
+    });
+    try {
+      const res = await fetch(`http://127.0.0.1:${server.port}/api/pharmacies?q=awaria-osm`);
+      expect(res.status).toBe(502);
+      expect(res.headers.get("cache-control")).toBe("no-store");
+      expect(((await res.json()) as { error: string }).error).toContain("OpenStreetMap");
+    } finally {
+      server.stop(true);
+      db.close();
+      await rm(workDir, { recursive: true, force: true });
+    }
   });
 });

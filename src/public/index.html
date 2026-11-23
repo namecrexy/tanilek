@@ -3,12 +3,12 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="description" content="TaniLek – wyszukiwarka tańszych zamienników leków refundowanych na podstawie otwartych danych Ministerstwa Zdrowia." />
+    <meta name="description" content="TaniLek – wyszukiwarka tańszych zamienników leków refundowanych i bez recepty (OTC) na podstawie otwartych danych Ministerstwa Zdrowia i Rejestru Produktów Leczniczych." />
     <meta name="color-scheme" content="light" />
     <meta name="theme-color" content="#0F4C81" />
-    <title>TaniLek – tańsze zamienniki leków refundowanych</title>
-    <link rel="stylesheet" href="/styles.css?v=1.1.0" />
-    <script src="/app.js?v=1.1.0" defer></script>
+    <title>TaniLek – tańsze zamienniki leków refundowanych i bez recepty</title>
+    <link rel="stylesheet" href="/styles.css?v=1.2.0" />
+    <script src="/app.js?v=1.2.0" defer></script>
   </head>
   <body>
     <a class="skip-link" href="#wyniki">Przejdź do wyników</a>
@@ -34,7 +34,8 @@
     <main class="container" id="main">
       <div id="demo-banner" class="banner banner-info" role="status" hidden>
         <strong>Tryb demonstracyjny.</strong>
-        Wyświetlane są przykładowe dane (35 leków) z orientacyjnymi cenami. Aby wczytać pełny wykaz, uruchom
+        Wyświetlane są przykładowe dane (35 leków refundowanych i popularne leki bez recepty) z orientacyjnymi
+        cenami. Aby wczytać pełny wykaz, uruchom
         <code>bun run fetch-data</code>.
       </div>
 
@@ -75,6 +76,7 @@
           <button type="button" class="pill" data-q="Atoris">Atoris <small class="pill-hint">(Cholesterol)</small></button>
           <button type="button" class="pill" data-q="Glucophage">Glucophage <small class="pill-hint">(Cukrzyca)</small></button>
           <button type="button" class="pill" data-q="Euthyrox">Euthyrox <small class="pill-hint">(Tarczyca)</small></button>
+          <button type="button" class="pill" data-q="Rutinoscorbin">Rutinoscorbin <small class="pill-hint">(OTC)</small></button>
         </fieldset>
       </section>
 
@@ -82,11 +84,31 @@
         <section class="results-panel" aria-labelledby="results-heading">
           <div class="panel-head">
             <h2 id="results-heading">Wyniki wyszukiwania</h2>
-            <p id="status" class="status" role="status" aria-live="polite">Zacznij pisać, aby wyszukać lek.</p>
+            <p class="status-line">
+              <span id="status" class="status" role="status" aria-live="polite">Zacznij pisać, aby wyszukać lek.</span>
+              <span id="search-cache" class="cache-pill" hidden></span>
+            </p>
           </div>
+          <div id="search-progress" class="progress" hidden></div>
           <p id="resolved-note" class="note-bar" role="status" hidden></p>
+          <fieldset id="category-filters" class="category-filters" hidden>
+            <legend class="visually-hidden">Filtruj według kategorii dostępności</legend>
+            <button type="button" class="pill category-pill" data-kategoria="wszystkie" aria-pressed="true">
+              Wszystkie <span class="count" data-count="wszystkie">0</span>
+            </button>
+            <button type="button" class="pill category-pill" data-kategoria="Rp" aria-pressed="false">
+              Refundowane (NFZ) <span class="count" data-count="Rp">0</span>
+            </button>
+            <button type="button" class="pill category-pill" data-kategoria="OTC" aria-pressed="false">
+              Bez recepty (OTC) <span class="count" data-count="OTC">0</span>
+            </button>
+          </fieldset>
           <fieldset id="dose-filters" class="dose-filters" hidden></fieldset>
           <ol id="wyniki" class="results" tabindex="-1"></ol>
+          <div id="load-more" class="load-more" hidden>
+            <button type="button" id="load-more-btn" class="load-more-btn">Pokaż więcej wyników</button>
+            <p id="load-more-info" class="load-more-info"></p>
+          </div>
         </section>
 
         <section class="details-panel card" aria-labelledby="details-heading" aria-live="polite">
@@ -98,7 +120,9 @@
           </div>
 
           <section id="pharmacy-finder" class="pharmacy-finder" aria-labelledby="pharmacy-heading">
-            <h3 id="pharmacy-heading" class="pharmacy-title">Znajdź aptekę w pobliżu</h3>
+            <h3 id="pharmacy-heading" class="pharmacy-title">
+              <span aria-hidden="true">📍</span> Znajdź aptekę w pobliżu
+            </h3>
             <form id="pharmacy-form" class="pharmacy-form" autocomplete="on">
               <label for="pharmacy-q" class="visually-hidden">Kod pocztowy lub adres</label>
               <input
@@ -106,18 +130,28 @@
                 name="pharmacy-q"
                 type="text"
                 inputmode="text"
-                placeholder="Wpisz kod pocztowy lub adres, np. 00-001 lub Warszawa, Marszałkowska 10"
+                placeholder="Kod pocztowy lub adres, np. 00-001"
+                title="Kod pocztowy lub adres, np. 00-001 lub Warszawa, Marszałkowska 10"
                 minlength="3"
                 maxlength="120"
                 required
               />
-              <button type="submit" class="pharmacy-btn">Szukaj aptek</button>
+              <button type="submit" class="pharmacy-btn">Szukaj</button>
             </form>
-            <p id="pharmacy-status" class="status pharmacy-status" role="status" aria-live="polite"></p>
-            <ol id="pharmacy-list" class="pharmacy-list"></ol>
-            <p class="pharmacy-info">
-              Cena leku refundowanego jest ustawowo <strong>taka sama w każdej aptece</strong> w Polsce. Dostępność
-              <span id="pharmacy-drug-label">wybranego leku</span> „od ręki” możesz sprawdzić w serwisach
+            <div id="pharmacy-progress" class="progress" hidden></div>
+            <p class="status-line pharmacy-status-line">
+              <span id="pharmacy-status" class="status pharmacy-status" role="status" aria-live="polite"></span>
+              <span id="pharmacy-cache" class="cache-pill" hidden></span>
+            </p>
+            <details id="pharmacy-results" class="pharmacy-results" open hidden>
+              <summary id="pharmacy-summary">Znalezione apteki</summary>
+              <ol id="pharmacy-list" class="pharmacy-list"></ol>
+            </details>
+            <p id="pharmacy-info" class="pharmacy-info">
+              <span id="pharmacy-price-note"
+                >Cena leku refundowanego jest ustawowo <strong>taka sama w każdej aptece</strong> w Polsce.</span
+              >
+              Dostępność <span id="pharmacy-drug-label">wybranego leku</span> „od ręki” możesz sprawdzić w serwisach
               <a id="ktomalek-link" href="https://ktomalek.pl/" target="_blank" rel="noopener noreferrer">KtoMaLek</a>
               i
               <a id="gdziepolek-link" href="https://www.gdziepolek.pl/" target="_blank" rel="noopener noreferrer"
@@ -145,7 +179,10 @@
       <div class="container">
         <p>
           Źródło danych: <span id="data-source">ładowanie…</span>.
-          Dane publiczne udostępniane przez <a href="https://dane.gov.pl" rel="noopener noreferrer">dane.gov.pl</a>.
+          Dane publiczne udostępniane przez <a href="https://dane.gov.pl" rel="noopener noreferrer">dane.gov.pl</a>
+          oraz
+          <a href="https://rejestrymedyczne.ezdrowie.gov.pl/" rel="noopener noreferrer">Rejestr Produktów Leczniczych</a>.
+          Ceny leków bez recepty są orientacyjne (szacunek).
         </p>
         <p>
           TaniLek – projekt open source na licencji MIT. Wersja <span id="app-version">–</span>.

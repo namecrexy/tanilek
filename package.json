@@ -1,7 +1,7 @@
 {
   "name": "tanilek",
-  "version": "1.1.0",
-  "description": "TaniLek – wyszukiwarka tańszych zamienników leków refundowanych (dane.gov.pl + DuckDB + Bun).",
+  "version": "1.2.0",
+  "description": "TaniLek – wyszukiwarka tańszych zamienników leków refundowanych i bez recepty (dane.gov.pl + RPL + DuckDB + Bun).",
   "author": "Bartosz Pastuszka",
   "license": "MIT",
   "type": "module",
@@ -13,7 +13,10 @@
     "duckdb",
     "parquet",
     "bun",
-    "open-data"
+    "open-data",
+    "otc",
+    "rpl",
+    "atc"
   ],
   "engines": {
     "bun": ">=1.1.0"

@@ -6,11 +6,11 @@
 |---------------------------------|-----------------------------------------------------------|
 | **Identyfikator dokumentu**     | DOC-ISO21513-001                                          |
 | **Tytuł**                       | Raport końcowy projektu TaniLek (struktura ISO 21513)     |
-| **Wersja**                      | 1.1.0                                                     |
+| **Wersja**                      | 1.2.0                                                     |
 | **Autor**                       | Bartosz Pastuszka                                         |
 | **Właściciel praw autorskich**  | Bartosz Pastuszka                                         |
 | **Data utworzenia**             | 2026-11-22                                                |
-| **Data ostatniej aktualizacji** | 2026-11-22                                                |
+| **Data ostatniej aktualizacji** | 2026-11-23                                                |
 | **Status**                      | Zatwierdzony                                              |
 | **Klasyfikacja**                | Publiczny (licencja MIT)                                  |
 | **Dokumenty powiązane**         | DOC-PMI-LL-002, DOC-ARCH-003, `README.md`, `CHANGELOG.md` |
@@ -21,6 +21,7 @@
 |--------|------------|---------------------------|-----------------------------|
 | 1.0.0  | 2026-11-22 | Bartosz Pastuszka         | Pierwsze wydanie raportu.   |
 | 1.1.0  | 2026-11-22 | Bartosz Pastuszka         | Wydanie 1.1.0: wyszukiwarka najbliższych aptek (OpenStreetMap), `Cache-Control: no-cache` dla plików statycznych, 189 testów. |
+| 1.2.0  | 2026-11-23 | Bartosz Pastuszka         | Wydanie 1.2.0: leki bez recepty (OTC) z RPL, kody ATC i automatyczne opisy grup, średnia cena w grupie, filtr Rp/OTC, cache wyszukiwania, failover Overpass i tryb awaryjny aptek, paski postępu, 288 testów. |
 
 > **Nota o strukturze.** Układ rozdziałów odpowiada szkieletowi raportu końcowego określonemu
 > w wymaganiach projektu (oznaczenie „ISO 21513”). Treść realizuje zalecenia dotyczące
@@ -80,8 +81,11 @@ Udostępnienie bezpłatnego, otwartoźródłowego narzędzia, które w czasie rz
 | Interfejs użytkownika         | `src/public/`                     | Dostarczony |
 | Skrypt pobierania danych      | `scripts/fetch_data.ts`           | Dostarczony |
 | Próbka danych (35 leków)      | `tests/fixtures/sample_leki.csv`  | Dostarczony |
-| Wyszukiwarka aptek (OSM)      | `src/pharmacies.ts`               | Dostarczony (1.1.0) |
-| Testy automatyczne (189)      | `tests/`                          | Dostarczony |
+| Wyszukiwarka aptek (OSM)      | `src/pharmacies.ts`               | Dostarczony (1.1.0), failover i tryb awaryjny (1.2.0) |
+| Leki OTC i szacowanie cen     | `src/otc.ts`                      | Dostarczony (1.2.0) |
+| Opisy grup ATC                | `src/atc.ts`                      | Dostarczony (1.2.0) |
+| Cache wyszukiwania (LRU/TTL)  | `src/cache.ts`                    | Dostarczony (1.2.0) |
+| Testy automatyczne (288)      | `tests/`                          | Dostarczony |
 | Pipeline CI                   | `.github/workflows/ci.yml`        | Dostarczony |
 | Obraz Docker i Compose        | `Dockerfile`, `docker-compose.yml`| Dostarczony |
 | Dokumentacja                  | `README.md`, `docs/`, pliki społeczności | Dostarczony |
@@ -99,16 +103,25 @@ Udostępnienie bezpłatnego, otwartoźródłowego narzędzia, które w czasie rz
   wyników 8 km), odległość wzorem Haversine'a, link do nawigacji, cache w pamięci 15 min;
   błędy `400` / `404` / `502` z komunikatami po polsku.
 - Interfejs z podglądem metryk wydajności na żywo (czas DuckDB z nagłówka `Server-Timing`).
+- **Wersja 1.2.0:** leki bez recepty (OTC) z Rejestru Produktów Leczniczych z orientacyjnymi cenami
+  i filtrem „Wszystkie / Refundowane (NFZ) / Bez recepty (OTC)” z licznikami; średnia cena w każdej grupie
+  zamienników z porównaniem do wybranego leku; karta „Na co pomaga” dla każdego leku (słownik 220 substancji
+  lub automatyczny opis grupy ATC); `GET /api/search` z cache LRU/TTL 10 min i polami `cached` /
+  `durationMs`; wyszukiwarka aptek z rotacją 3 serwerów Overpass (8 s na serwer) i trybem awaryjnym
+  (`isFallback`) zamiast błędu `502`; animowane paski postępu w UI i w skrypcie ETL; wyszukiwarka aptek
+  przeniesiona nad przewijaną tabelę zamienników.
 
 ### 2.3. Weryfikacja jakości
 
 | Kontrola                         | Wynik                                         |
 |----------------------------------|-----------------------------------------------|
-| `bun test`                       | 189 testów, 997 asercji – 100% zaliczonych    |
+| `bun test`                       | 288 testów, 1 582 asercje – 100% zaliczonych  |
 | `bun run lint` (Biome)           | 0 błędów, 0 ostrzeżeń                         |
 | `bun run typecheck` (TS strict)  | 0 błędów                                      |
 | Import rzeczywistego wykazu MZ   | 4 282 leki (arkusz `A1`, obwieszczenie z 16.09.2026, obowiązuje od 1.10.2026), 1450 grup, 460 substancji |
-| Słownik wyszukiwarki             | 180 substancji czynnych, 1 154 aliasy (nazwy handlowe, polskie nazwy, opisy stosowania) |
+| Słownik wyszukiwarki             | 220 substancji czynnych (w tym 45 OTC), 1 370 haseł; 75 grup ATC z opisami |
+| Import leków OTC z RPL (1.2.0)   | 5 835 opakowań OTC z 23 030 produktów RPL; kody ATC uzupełnione dla 3 928 z 4 282 leków Rp; łącznie 10 117 pozycji |
+| Karta „Na co pomaga” (1.2.0)     | 100% leków OTC i 96,8% leków Rp ze słownika lub grupy ATC (reszta – ze wskazania MZ) |
 | Budowa Parquet z próbki          | 35 pozycji, kompresja ZSTD potwierdzona testem |
 
 ## 3. Porównanie realizacji z planem pierwotnym (zakres, harmonogram, wydajność)
@@ -140,6 +153,8 @@ Udostępnienie bezpłatnego, otwartoźródłowego narzędzia, które w czasie rz
 Wszystkie etapy zrealizowano w ramach jednej iteracji wydania 1.0.0 (2026-11-22).
 W wydaniu 1.1.0 (2026-11-22) dodano wyszukiwarkę najbliższych aptek (`src/pharmacies.ts`,
 26 nowych testów z zamockowanym `fetch`) oraz poprawiono nagłówki cache plików statycznych.
+W wydaniu 1.2.0 (2026-11-23) dodano leki OTC z RPL, opisy grup ATC, średnie ceny w grupach, filtr
+kategorii, cache wyszukiwania oraz failover i tryb awaryjny wyszukiwarki aptek (99 nowych testów).
 Dwie nieplanowane iteracje (E2, E5) wynikały z decyzji o weryfikacji rozwiązania na
 rzeczywistym wykazie MZ zamiast wyłącznie na próbce – zwiększyły nakład pracy, ale wykryły
 trzy błędy, których testy na próbce by nie ujawniły (zob. DOC-PMI-LL-002).
@@ -153,6 +168,8 @@ trzy błędy, których testy na próbce by nie ujawniły (zob. DOC-PMI-LL-002).
 | Pobranie strony (HTML/CSS/JS)          | < 50 ms          | 4–5 ms każdy plik (localhost)| ✅    |
 | Redukcja rozmiaru CSV → Parquet        | 70–80%           | 87,9% (ZSTD), 82,2% (Snappy) | ✅    |
 | Debouncing zapytań                     | 150 ms           | 150 ms                       | ✅    |
+| Wyszukiwanie p95 – v1.2.0 (10 117 poz.) | < 10 ms         | 6,6 ms (z licznikami kategorii); z cache 0,04 ms | ✅ |
+| Zamienniki p95 – v1.2.0                | < 10 ms          | 2,0 ms                       | ✅    |
 
 ### 3.4. Odchylenia i ich obsługa
 
@@ -161,6 +178,9 @@ trzy błędy, których testy na próbce by nie ujawniły (zob. DOC-PMI-LL-002).
 | Brak aktualnego wykazu MZ na dane.gov.pl | Obwieszczenia publikowane są jako załączniki na gov.pl; na dane.gov.pl dostępny jest jedynie zbiór NFZ „Leki refundowane” z zestawieniami z lat 2011–2018. | Skrypt przeszukuje API, waliduje strukturę i odrzuca niepasujące pliki; dodano `SOURCE_URL`. Import rzeczywistego załącznika XLSX (obwieszczenie na 1.10.2026) został zweryfikowany: 4282 pozycje. |
 | Nieprzetestowany lokalnie obraz Docker | Brak Dockera na stacji roboczej | Zadanie `docker` w CI buduje obraz i wykonuje smoke test API. |
 | Wydajność wersji wstępnej ok. 13 ms | Widok nad Parquet + złączenie przy każdym zapytaniu | Materializacja w pamięci z kolumnami wyliczonymi z góry: 3,1 ms (p50). |
+| RPL nie zawiera cen leków OTC (1.2.0) | Rejestr opisuje pozwolenia i opakowania, nie ceny; ceny OTC nie są regulowane | Ceny szacowane (znana cena marki lub typowa cena grupy ATC), wyraźnie oznaczane „ok.” z linkami do KtoMaLek / GdziePoLek; opakowania bez kodu ATC pomijane. |
+| Arkusz A1 obwieszczenia nie ma kodów ATC (1.2.0) | Format obwieszczenia MZ | Kody ATC uzupełniane z RPL po kodzie EAN (3 928 z 4 282). |
+| Jednoczesna awaria wszystkich serwerów Overpass (1.2.0) | Przeciążenie publicznej infrastruktury OSM (w testach 23.11.2026: `502`/`504`/timeout na wszystkich 3) | Tryb awaryjny z przykładowymi, wyraźnie oznaczonymi aptekami i linkiem do Map Google zamiast błędu. |
 
 ## 4. Wpływ społeczny i techniczny rozwiązania
 
@@ -220,7 +240,8 @@ bez polskich znaków.
 | Średni    | Rozpoznawanie objętości i liczby jednostek dla płynów, zawiesin i wstrzykiwaczy.           |
 | Średni    | Historia cen między kolejnymi obwieszczeniami i powiadomienia o zmianach dopłat.           |
 | Średni    | Test użyteczności z udziałem seniorów i farmaceutów.                                       |
-| Średni    | Własna instancja Overpass API lub serwer zapasowy dla wyszukiwarki aptek (publiczne API bywa przeciążone, odpowiedź do ~30 s). |
+| Średni    | Własna instancja Overpass API dla wyszukiwarki aptek – 3 publiczne serwery lustrzane (1.2.0) bywają przeciążone jednocześnie. |
+| Średni    | Rzeczywiste ceny leków OTC (np. współpraca z serwisami porównującymi ceny) zamiast szacunku.  |
 | Niski     | Tryb offline (PWA) i wersja do druku dla pacjenta.                                         |
 
 ### 5.3. Przekazanie projektu

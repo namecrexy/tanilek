@@ -4,8 +4,9 @@ import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { ConfigError, loadConfig } from "../src/config";
 import { DrugDatabase } from "../src/db";
-import { APP_VERSION, createServer, makeEtag, serverTiming } from "../src/server";
-import type { EquivalentsResult, HealthStatus, SearchResult } from "../src/types";
+import { BUILTIN_OTC } from "../src/otc";
+import { APP_VERSION, createServer, makeEtag, searchCacheKey, serverTiming } from "../src/server";
+import type { EquivalentsResult, HealthStatus, SearchResponse, SearchResult } from "../src/types";
 
 const FIXTURE = resolve(import.meta.dir, "fixtures", "sample_leki.csv");
 
@@ -55,7 +56,9 @@ describe("GET /api/health", () => {
     const body = (await res.json()) as HealthStatus;
     expect(body.status).toBe("ok");
     expect(body.version).toBe(APP_VERSION);
-    expect(body.rows).toBe(35);
+    expect(body.rows).toBe(35 + BUILTIN_OTC.length);
+    expect(body.data.rows_rp).toBe(35);
+    expect(body.data.rows_otc).toBe(BUILTIN_OTC.length);
     expect(body.data.source).toBe("fallback-demo");
   });
 });
@@ -71,8 +74,10 @@ describe("GET /api/search", () => {
     expect(res.headers.get("etag")).toMatch(/^"[0-9a-z]+"$/);
     expect(res.headers.get("cache-control")).toBe("public, max-age=60");
     const body = (await res.json()) as SearchResult;
-    expect(body.count).toBe(1);
+    expect(body.count).toBe(5); // Sortis + zamienniki z atorwastatyną (alias „sortis”)
     expect(body.items[0]?.nazwa).toBe("Sortis");
+    expect(body.items[0]?.dopasowanie).toBe("nazwa");
+    expect(Object.keys(body.items[0] ?? {}).some((k) => k.startsWith("_"))).toBe(false);
     expect(body.items[0]?.mozliwa_oszczednosc).toBe(82.4);
   });
 
@@ -108,7 +113,7 @@ describe("GET /api/search", () => {
     ["za długie zapytanie", `q=${"x".repeat(101)}`],
     ["limit nie jest liczbą", "q=sortis&limit=abc"],
     ["limit równy zero", "q=sortis&limit=0"],
-    ["limit powyżej maksimum", "q=sortis&limit=51"],
+    ["limit powyżej maksimum", "q=sortis&limit=501"],
   ])("400 – %s", async (_name, query) => {
     const res = await fetch(`${base}/api/search?${query}`);
     expect(res.status).toBe(400);
@@ -170,8 +175,9 @@ describe("routing i nagłówki", () => {
     expect(res.headers.get("cache-control")).toBe("no-cache");
     const html = await res.text();
     expect(html).toContain("TaniLek");
-    expect(html).toContain('src="/app.js?v=1.1.0"');
-    expect(html).toContain('href="/styles.css?v=1.1.0"');
+    expect(APP_VERSION).toBe("1.2.0");
+    expect(html).toContain(`src="/app.js?v=${APP_VERSION}"`);
+    expect(html).toContain(`href="/styles.css?v=${APP_VERSION}"`);
     expect(html).toContain("Znajdź aptekę w pobliżu");
   });
 
@@ -260,5 +266,79 @@ describe("loadConfig", () => {
     [{ FETCH_TIMEOUT_MS: "10" }],
   ])("odrzuca błędną konfigurację %p", (env) => {
     expect(() => loadConfig(env as Record<string, string>, "/app")).toThrow(ConfigError);
+  });
+});
+
+describe("GET /api/search – cache, kategorie i średnia cena (v1.2.0)", () => {
+  test("pierwsze zapytanie „na żywo”, powtórzone – z pamięci podręcznej (cached, durationMs)", async () => {
+    const first = (await (await fetch(`${base}/api/search?q=Tulip`)).json()) as SearchResponse;
+    expect(first.cached).toBe(false);
+    expect(first.durationMs).toBeGreaterThanOrEqual(0);
+    const second = (await (await fetch(`${base}/api/search?q=%20tulip%20`)).json()) as SearchResponse;
+    expect(second.cached).toBe(true);
+    expect(second.durationMs).toBeGreaterThanOrEqual(0);
+    expect(second.items).toEqual(first.items);
+  });
+
+  test("klucz cache uwzględnia limit i kategorię", async () => {
+    const a = (await (await fetch(`${base}/api/search?q=Crestor&limit=5`)).json()) as SearchResponse;
+    const b = (await (await fetch(`${base}/api/search?q=Crestor&limit=6`)).json()) as SearchResponse;
+    const c = (await (await fetch(`${base}/api/search?q=Crestor&limit=5&kategoria=Rp`)).json()) as SearchResponse;
+    expect([a.cached, b.cached, c.cached]).toEqual([false, false, false]);
+    expect(searchCacheKey(" Crestor ", 5, "Rp")).toBe("crestor|5|Rp");
+  });
+
+  test("ETag nie zależy od pól cached/durationMs – 304 także dla odpowiedzi z cache", async () => {
+    const first = await fetch(`${base}/api/search?q=Plavix`);
+    const etag = first.headers.get("etag") ?? "";
+    expect(((await first.json()) as SearchResponse).cached).toBe(false);
+    const cachedRes = await fetch(`${base}/api/search?q=Plavix`);
+    expect(cachedRes.headers.get("etag")).toBe(etag);
+    expect(((await cachedRes.json()) as SearchResponse).cached).toBe(true);
+    const notModified = await fetch(`${base}/api/search?q=Plavix`, { headers: { "If-None-Match": etag } });
+    expect(notModified.status).toBe(304);
+  });
+
+  test("kategoria=OTC i kategoria=Rp filtrują wyniki, liczniki obejmują obie kategorie", async () => {
+    const all = (await (await fetch(`${base}/api/search?q=um&limit=50`)).json()) as SearchResponse;
+    const otc = (await (await fetch(`${base}/api/search?q=um&limit=50&kategoria=OTC`)).json()) as SearchResponse;
+    const rp = (await (await fetch(`${base}/api/search?q=um&limit=50&kategoria=rp`)).json()) as SearchResponse;
+    expect(all.kategoria).toBe("wszystkie");
+    expect(otc.kategoria).toBe("OTC");
+    expect(rp.kategoria).toBe("Rp");
+    expect(otc.items.length).toBeGreaterThan(0);
+    expect(otc.items.every((i) => i.kategoriaDostepnosci === "OTC")).toBe(true);
+    expect(rp.items.every((i) => i.kategoriaDostepnosci === "Rp" && i.czyRefundowany)).toBe(true);
+    expect(otc.liczniki).toEqual(all.liczniki as NonNullable<typeof all.liczniki>);
+    expect(all.liczniki?.Rp).toBeGreaterThan(0);
+    expect(all.liczniki?.OTC).toBe(otc.count);
+    expect(all.liczniki?.Rp).toBe(rp.count);
+  });
+
+  test("400 dla nieznanej kategorii", async () => {
+    const res = await fetch(`${base}/api/search?q=apap&kategoria=Rpw`);
+    expect(res.status).toBe(400);
+    expect(((await res.json()) as { error: string }).error).toContain("'kategoria'");
+  });
+
+  test("wyniki i zamienniki zawierają średnią cenę w grupie", async () => {
+    const search = (await (await fetch(`${base}/api/search?q=Atoris`)).json()) as SearchResponse;
+    const hit = search.items[0];
+    expect(hit?.sredniaCena).toBeGreaterThan(0);
+    expect(hit?.liczbaWGrupie).toBe(5);
+    const eq = (await (await fetch(`${base}/api/equivalents?id=${hit?.id}`)).json()) as EquivalentsResult;
+    expect(eq.liczbaWGrupie).toBe(5);
+    expect(eq.sredniaCena).toBeCloseTo(hit?.sredniaCena ?? 0, 2);
+    expect(eq.roznicaDoSredniej).toBeLessThan(0); // Atoris (3,20 zł) jest tańszy od średniej w grupie
+  });
+
+  test("lek OTC w panelu zamienników ma kategorię OTC i opis ze słownika", async () => {
+    const search = (await (await fetch(`${base}/api/search?q=Espumisan&kategoria=OTC`)).json()) as SearchResponse;
+    const hit = search.items[0];
+    expect(hit?.kategoriaDostepnosci).toBe("OTC");
+    const eq = (await (await fetch(`${base}/api/equivalents?id=${hit?.id}`)).json()) as EquivalentsResult;
+    expect(eq.wybrany.kategoriaDostepnosci).toBe("OTC");
+    expect(eq.opisSubstancji.substancja).toBe("Simeticonum");
+    expect(eq.liczbaWGrupie).toBe(2);
   });
 });

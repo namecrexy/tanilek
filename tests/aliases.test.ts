@@ -251,6 +251,7 @@ describe("DrugDatabase – aliasy i wyszukiwanie przybliżone", () => {
     const { data } = await db.search("atorwastatyna", 20);
     expect(data.matchMode).toBe("alias");
     expect(data.count).toBe(5);
+    expect(data.items.every((i) => i.dopasowanie === "alias" && i.substancja_czynna === "Atorvastatinum")).toBe(true);
     expect(data.resolvedSubstance).toBe("Atorvastatinum");
     expect(data.resolvedNote).toBe("Rozpoznano substancję: Atorvastatinum (dla zapytania: atorwastatyna)");
   });
